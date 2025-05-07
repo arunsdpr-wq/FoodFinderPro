@@ -6,8 +6,8 @@ import { useCart } from "../context/CartContext";
 import { Cart } from "./Cart";
 import { useState, useEffect } from "react";
 import { useIsMobile as useMobile } from "@/hooks/use-mobile";
-import { ReviewSummary } from "@/components/ui/ReviewSummary";
-import { ReviewList } from "@/components/ui/ReviewList";
+import ReviewSummary from "@/components/ui/ReviewSummary";
+import ReviewList from "@/components/ui/ReviewList";
 
 interface MenuDisplayProps {
   restaurantId: string;
@@ -19,9 +19,14 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
   const { addToCart } = useCart();
   const isMobile = useMobile();
   
-  // Fetch reviews to get the count
-  const { data: reviews } = useQuery<any[]>({
+  // Fetch reviews to get the count and average rating
+  const { data: reviews, refetch: refetchReviews } = useQuery<any[]>({
     queryKey: [`/api/restaurants/${restaurantId}/reviews`],
+  });
+  
+  // Fetch average rating
+  const { data: averageRating = 0 } = useQuery<number>({
+    queryKey: [`/api/restaurants/${restaurantId}/rating`],
   });
 
   // Define types for restaurant and menu items
@@ -97,12 +102,18 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
           <Card className="mb-6">
             <CardContent className="pt-6">
               <ReviewSummary 
-                restaurantValue={restaurantId} 
-                reviewsCount={reviews?.length || 0}
+                restaurantId={restaurant?.id || 0} 
+                averageRating={averageRating} 
+                totalReviews={reviews?.length || 0}
+                onReviewAdded={() => refetchReviews()}
               />
               
               <div className="mt-8">
-                <ReviewList restaurantValue={restaurantId} />
+                <ReviewList 
+                  reviews={reviews || []} 
+                  onReviewDeleted={() => refetchReviews()}
+                  onReviewUpdated={() => refetchReviews()}
+                />
               </div>
             </CardContent>
           </Card>

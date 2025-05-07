@@ -1,73 +1,70 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { DisplayRating } from "@/components/ui/Rating";
-import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ReviewForm } from "@/components/ui/ReviewForm";
-import { Skeleton } from "@/components/ui/skeleton";
+import React, { useState } from 'react';
+import { PlusCircle } from 'lucide-react';
+import Rating from '@/components/ui/Rating';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { useAuth } from '@/hooks/use-auth';
+import ReviewForm from '@/components/ui/ReviewForm';
 
 interface ReviewSummaryProps {
-  restaurantValue: string;
-  reviewsCount?: number;
+  restaurantId: number;
+  averageRating: number;
+  totalReviews: number;
+  onReviewAdded?: () => void;
 }
 
-export function ReviewSummary({ restaurantValue, reviewsCount = 0 }: ReviewSummaryProps) {
+export default function ReviewSummary({ 
+  restaurantId, 
+  averageRating, 
+  totalReviews,
+  onReviewAdded,
+}: ReviewSummaryProps) {
   const { user } = useAuth();
-  const [isDialogOpen, setIsDialogOpen] = React.useState(false);
-
-  // Fetch the average rating
-  const { 
-    data: ratingData, 
-    isLoading: isRatingLoading 
-  } = useQuery<{ rating: number }>({ 
-    queryKey: ['/api/restaurants', restaurantValue, 'rating'],
-    queryFn: async () => {
-      const response = await fetch(`/api/restaurants/${restaurantValue}/rating`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch rating');
-      }
-      return response.json();
+  const [dialogOpen, setDialogOpen] = useState(false);
+  
+  const handleReviewSuccess = () => {
+    setDialogOpen(false);
+    if (onReviewAdded) {
+      onReviewAdded();
     }
-  });
-
-  const averageRating = ratingData?.rating || 0;
-
+  };
+  
+  const formatRating = (rating: number) => {
+    return rating.toFixed(1);
+  };
+  
   return (
-    <div className="flex flex-col space-y-4 md:flex-row md:items-center md:justify-between md:space-y-0">
-      <div className="flex flex-col space-y-2">
-        <h3 className="text-lg font-medium">Customer Reviews</h3>
-        
-        <div className="flex items-center space-x-2">
-          {isRatingLoading ? (
-            <Skeleton className="h-5 w-28" />
-          ) : (
-            <>
-              <DisplayRating value={averageRating} showValue size="md" />
-              <span className="text-sm text-gray-500">
-                ({reviewsCount} {reviewsCount === 1 ? 'review' : 'reviews'})
-              </span>
-            </>
-          )}
-        </div>
+    <div className="flex flex-col items-center justify-center py-4 bg-muted/30 rounded-lg">
+      <div className="flex items-center space-x-2 mb-1">
+        <span className="text-2xl font-bold">{formatRating(averageRating)}</span>
+        <Rating value={averageRating} readOnly size="md" />
       </div>
+      <p className="text-sm text-muted-foreground mb-4">
+        Based on {totalReviews} {totalReviews === 1 ? 'review' : 'reviews'}
+      </p>
       
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogTrigger asChild>
-          <Button 
-            disabled={!user}
-            title={!user ? "Please log in to write a review" : undefined}
-          >
-            Write a Review
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-md">
+      {user ? (
+        <Button
+          variant="outline"
+          size="sm"
+          className="flex items-center"
+          onClick={() => setDialogOpen(true)}
+        >
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Write a Review
+        </Button>
+      ) : (
+        <p className="text-xs text-muted-foreground">Sign in to leave a review</p>
+      )}
+      
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogContent>
           <DialogHeader>
-            <DialogTitle>Share Your Experience</DialogTitle>
+            <DialogTitle>Write a Review</DialogTitle>
           </DialogHeader>
           <ReviewForm 
-            restaurantValue={restaurantValue} 
-            onSuccess={() => setIsDialogOpen(false)}
+            restaurantId={restaurantId} 
+            onSuccess={handleReviewSuccess} 
           />
         </DialogContent>
       </Dialog>

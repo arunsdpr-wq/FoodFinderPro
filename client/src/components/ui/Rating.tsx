@@ -1,110 +1,93 @@
-import React from "react";
-import { Star, StarHalf } from "lucide-react";
-import { cn } from "@/lib/utils";
+import React from 'react';
+import { Star, StarHalf } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface RatingProps {
   value: number;
-  onChange?: (value: number) => void;
-  size?: "sm" | "md" | "lg";
+  max?: number;
+  size?: 'sm' | 'md' | 'lg';
   readOnly?: boolean;
+  onChange?: (value: number) => void;
   className?: string;
 }
 
-export function Rating({
+export default function Rating({
   value,
+  max = 5,
+  size = 'md',
+  readOnly = true,
   onChange,
-  size = "md",
-  readOnly = false,
   className,
 }: RatingProps) {
-  const [hoverValue, setHoverValue] = React.useState<number | null>(null);
-  
-  // Determine the size of stars based on the size prop
-  const starSizeClass = {
-    sm: "h-4 w-4",
-    md: "h-5 w-5",
-    lg: "h-6 w-6",
+  const stars = [];
+  const starSizes = {
+    sm: 'h-4 w-4',
+    md: 'h-5 w-5',
+    lg: 'h-6 w-6',
   };
   
-  // Generate an array of 5 stars
-  const stars = Array.from({ length: 5 }, (_, i) => i + 1);
+  const starSize = starSizes[size];
   
-  // Calculate the effective rating to display
-  const effectiveRating = hoverValue !== null ? hoverValue : value;
-  
-  return (
-    <div 
-      className={cn(
-        "flex space-x-1", 
-        readOnly ? "pointer-events-none" : "cursor-pointer",
-        className
-      )}
-    >
-      {stars.map((star) => {
-        // Determine if the star should be filled, half-filled, or empty
-        const isFilled = star <= effectiveRating;
-        const isHalfFilled = !isFilled && star - 0.5 <= effectiveRating;
-        
-        return (
-          <span
-            key={star}
+  const handleClick = (index: number) => {
+    if (!readOnly && onChange) {
+      onChange(index + 1);
+    }
+  };
+
+  for (let i = 0; i < max; i++) {
+    if (i < Math.floor(value)) {
+      // Full star
+      stars.push(
+        <Star
+          key={i}
+          className={cn(
+            starSize,
+            "fill-yellow-400 text-yellow-400",
+            !readOnly && "cursor-pointer"
+          )}
+          onClick={() => handleClick(i)}
+        />
+      );
+    } else if (i === Math.floor(value) && value % 1 >= 0.5) {
+      // Half star
+      stars.push(
+        <div key={i} className="relative">
+          <Star
             className={cn(
-              "transition-colors",
-              isFilled ? "text-yellow-400" : "text-gray-300",
-              !readOnly && "hover:text-yellow-400"
+              starSize,
+              "text-muted-foreground/30",
+              !readOnly && "cursor-pointer"
             )}
-            onClick={() => {
-              if (!readOnly && onChange) {
-                onChange(star);
-              }
-            }}
-            onMouseEnter={() => {
-              if (!readOnly) {
-                setHoverValue(star);
-              }
-            }}
-            onMouseLeave={() => {
-              if (!readOnly) {
-                setHoverValue(null);
-              }
-            }}
-          >
-            {isHalfFilled ? (
-              <StarHalf className={starSizeClass[size]} fill="currentColor" />
-            ) : (
-              <Star
-                className={starSizeClass[size]}
-                fill={isFilled ? "currentColor" : "none"}
-              />
+          />
+          <StarHalf
+            className={cn(
+              starSize,
+              "absolute top-0 left-0 fill-yellow-400 text-yellow-400",
+              !readOnly && "cursor-pointer"
             )}
-          </span>
-        );
-      })}
-    </div>
-  );
-}
+            onClick={() => handleClick(i)}
+          />
+        </div>
+      );
+    } else {
+      // Empty star
+      stars.push(
+        <Star
+          key={i}
+          className={cn(
+            starSize,
+            "text-muted-foreground/30",
+            !readOnly && "cursor-pointer"
+          )}
+          onClick={() => handleClick(i)}
+        />
+      );
+    }
+  }
 
-interface DisplayRatingProps {
-  value: number;
-  showValue?: boolean;
-  size?: "sm" | "md" | "lg";
-  className?: string;
-}
-
-export function DisplayRating({
-  value,
-  showValue = false,
-  size = "md",
-  className,
-}: DisplayRatingProps) {
   return (
     <div className={cn("flex items-center", className)}>
-      <Rating value={value} size={size} readOnly />
-      {showValue && (
-        <span className="ml-2 text-gray-700 font-medium">
-          {value.toFixed(1)}
-        </span>
-      )}
+      {stars}
     </div>
   );
 }

@@ -184,6 +184,7 @@ export const insertReviewSchema = createInsertSchema(reviews).pick({
   comment: true,
   title: true,
   orderNumber: true,
+  isApproved: true,
 });
 
 export type InsertReview = z.infer<typeof insertReviewSchema>;

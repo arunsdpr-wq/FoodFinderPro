@@ -1,189 +1,157 @@
-import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import { Review } from "@shared/schema";
-import { DisplayRating } from "@/components/ui/Rating";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Pencil, Trash2 } from "lucide-react";
-import { useAuth } from "@/hooks/use-auth";
-import { useToast } from "@/hooks/use-toast";
-import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ReviewForm } from "@/components/ui/ReviewForm";
-import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import React from 'react';
+import { format } from 'date-fns';
+import { Edit, Trash2 } from 'lucide-react';
+import Rating from '@/components/ui/Rating';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Review } from '@shared/schema';
+import { useAuth } from '@/hooks/use-auth';
+import { useToast } from '@/hooks/use-toast';
+import ReviewForm from '@/components/ui/ReviewForm';
 
 interface ReviewListProps {
-  restaurantValue: string;
-  limit?: number;
+  reviews: Review[];
+  onReviewDeleted?: () => void;
+  onReviewUpdated?: () => void;
+  isProfile?: boolean;
 }
 
-export function ReviewList({ restaurantValue, limit }: ReviewListProps) {
+export default function ReviewList({ 
+  reviews, 
+  onReviewDeleted, 
+  onReviewUpdated,
+  isProfile = false,
+}: ReviewListProps) {
   const { user } = useAuth();
   const { toast } = useToast();
   const [editingReview, setEditingReview] = React.useState<Review | null>(null);
   const [dialogOpen, setDialogOpen] = React.useState(false);
-
-  // Fetch reviews for the restaurant
-  const { 
-    data: reviews, 
-    isLoading, 
-    error 
-  } = useQuery<Review[]>({ 
-    queryKey: ['/api/restaurants', restaurantValue, 'reviews'],
-    queryFn: async () => {
-      const response = await fetch(`/api/restaurants/${restaurantValue}/reviews`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch reviews');
-      }
-      return response.json();
+  
+  const handleDelete = async (reviewId: number) => {
+    if (!confirm('Are you sure you want to delete this review?')) {
+      return;
     }
-  });
-
-  // Handle review deletion
-  const handleDeleteReview = async (reviewId: number) => {
-    if (!confirm("Are you sure you want to delete this review?")) return;
-
+    
     try {
-      await apiRequest("DELETE", `/api/reviews/${reviewId}`);
+      const response = await fetch(`/api/reviews/${reviewId}`, {
+        method: 'DELETE',
+      });
       
-      // Invalidate queries to refresh the data
-      queryClient.invalidateQueries({ queryKey: ['/api/restaurants', restaurantValue, 'reviews'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/restaurants', restaurantValue, 'rating'] });
-      queryClient.invalidateQueries({ queryKey: ['/api/my-reviews'] });
+      if (!response.ok) {
+        throw new Error('Failed to delete review');
+      }
       
       toast({
-        title: "Review deleted",
-        description: "Your review has been deleted successfully."
+        title: 'Review deleted',
+        description: 'Your review has been successfully deleted',
       });
+      
+      if (onReviewDeleted) {
+        onReviewDeleted();
+      }
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete the review. Please try again.",
-        variant: "destructive"
+        title: 'Error',
+        description: error instanceof Error ? error.message : 'An error occurred',
+        variant: 'destructive',
       });
     }
   };
-
-  // Handle opening the edit dialog
-  const handleEditReview = (review: Review) => {
+  
+  const handleEdit = (review: Review) => {
     setEditingReview(review);
     setDialogOpen(true);
   };
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className="space-y-4">
-        {Array.from({ length: 3 }).map((_, i) => (
-          <Card key={i} className="w-full">
-            <CardHeader className="pb-2">
-              <Skeleton className="h-4 w-1/3 mb-2" />
-              <Skeleton className="h-3 w-24" />
-            </CardHeader>
-            <CardContent>
-              <Skeleton className="h-3 w-full mb-2" />
-              <Skeleton className="h-3 w-full mb-2" />
-              <Skeleton className="h-3 w-2/3" />
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    );
-  }
-
-  // Error state
-  if (error) {
-    return (
-      <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">
-        Error loading reviews. Please try again later.
-      </div>
-    );
-  }
-
-  // Filter and limit reviews if necessary
-  const displayedReviews = limit ? reviews?.slice(0, limit) : reviews;
-
-  // No reviews state
-  if (!displayedReviews || displayedReviews.length === 0) {
-    return (
-      <div className="text-center py-8 text-gray-500">
-        <p>No reviews yet for this restaurant.</p>
-        <p className="text-sm mt-2">Be the first to share your experience!</p>
-      </div>
-    );
-  }
-
-  // Format date for display
-  const formatDate = (date: Date | null) => {
-    if (!date) return "Unknown date";
-    return format(new Date(date), 'MMM d, yyyy');
+  
+  const handleEditSuccess = () => {
+    setDialogOpen(false);
+    setEditingReview(null);
+    
+    if (onReviewUpdated) {
+      onReviewUpdated();
+    }
   };
-
-  return (
-    <>
-      <div className="space-y-4">
-        {displayedReviews.map((review) => (
-          <Card key={review.id} className="w-full">
-            <CardHeader className="pb-2">
-              <div className="flex justify-between">
-                <CardTitle className="text-lg">{review.title}</CardTitle>
-                {user && user.id === review.userId && (
-                  <div className="flex space-x-2">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleEditReview(review)}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDeleteReview(review.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-red-500" />
-                    </Button>
-                  </div>
-                )}
-              </div>
-              <DisplayRating value={review.rating} />
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-700">{review.comment}</p>
-            </CardContent>
-            <CardFooter className="pt-0">
-              <CardDescription>
-                Posted on {formatDate(review.createdAt)}
-                {review.updatedAt && review.updatedAt !== review.createdAt && 
-                  ` (Edited on ${formatDate(review.updatedAt)})`}
-              </CardDescription>
-            </CardFooter>
-          </Card>
-        ))}
+  
+  if (reviews.length === 0) {
+    return (
+      <div className="text-center py-8 text-muted-foreground">
+        {isProfile ? "You haven't written any reviews yet." : "No reviews yet. Be the first to share your experience!"}
       </div>
-
-      {/* Edit Review Dialog */}
+    );
+  }
+  
+  return (
+    <div className="space-y-4">
+      {reviews.map((review) => (
+        <Card key={review.id} className="overflow-hidden">
+          <CardHeader className="pb-2">
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-base">{review.title || 'Review'}</CardTitle>
+                <div className="flex items-center space-x-2 mt-1">
+                  <Rating value={review.rating} size="sm" />
+                  <span className="text-xs text-muted-foreground">
+                    {review.createdAt && format(new Date(review.createdAt), 'MMM d, yyyy')}
+                  </span>
+                </div>
+              </div>
+              
+              {user && user.id === review.userId && (
+                <div className="flex space-x-2">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => handleEdit(review)}
+                  >
+                    <Edit className="h-4 w-4" />
+                    <span className="sr-only">Edit review</span>
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-destructive hover:text-destructive"
+                    onClick={() => handleDelete(review.id)}
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    <span className="sr-only">Delete review</span>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent>
+            <p className="text-sm text-muted-foreground">{review.comment}</p>
+            {!review.isApproved && (
+              <div className="mt-2 text-xs bg-yellow-50 text-yellow-800 px-2 py-1 rounded">
+                Pending approval
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      ))}
+      
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        {editingReview && (
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>Edit Your Review</DialogTitle>
-            </DialogHeader>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Edit Review</DialogTitle>
+          </DialogHeader>
+          {editingReview && (
             <ReviewForm
-              restaurantValue={restaurantValue}
-              isEditing={true}
+              restaurantId={editingReview.restaurantId}
               reviewId={editingReview.id}
               defaultValues={{
-                title: editingReview.title || "",
                 rating: editingReview.rating,
-                comment: editingReview.comment || ""
+                title: editingReview.title || '',
+                comment: editingReview.comment || '',
               }}
-              onSuccess={() => setDialogOpen(false)}
+              editMode={true}
+              onSuccess={handleEditSuccess}
             />
-          </DialogContent>
-        )}
+          )}
+        </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
