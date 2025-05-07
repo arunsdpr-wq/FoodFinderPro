@@ -165,20 +165,10 @@ export class DatabaseStorage implements IStorage {
       createdAt: new Date()
     };
     
-    // Ensure orderItems is structured correctly for JSON storage
-    const orderWithValidItems = {
-      ...orderWithNumber,
-      orderItems: JSON.stringify(orderWithNumber.orderItems)
-    };
-    
     // Insert the order into the database
-    const [order] = await db.insert(orders).values([orderWithValidItems]).returning();
+    const [order] = await db.insert(orders).values([orderWithNumber]).returning();
     
-    // Parse the stringified JSON back to an object for the returned Order
-    return {
-      ...order,
-      orderItems: JSON.parse(order.orderItems as string) as OrderItem[]
-    };
+    return order;
   }
   
   async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
