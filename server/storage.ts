@@ -122,11 +122,12 @@ export class MemStorage implements IStorage {
 
     // Restaurants
     const restaurantData: { data: InsertRestaurant, locationValue: string }[] = [
+      // Restaurant A for each location
       { 
         data: { 
-          name: "Italian Bistro", 
-          value: "italian-bistro", 
-          description: "Authentic Italian cuisine in a cozy atmosphere",
+          name: "Restaurant-A", 
+          value: "restaurant-a-manhattan", 
+          description: "Premier dining experience with a diverse menu",
           locationId: 0,
           imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
         }, 
@@ -134,9 +135,51 @@ export class MemStorage implements IStorage {
       },
       { 
         data: { 
-          name: "Sushi Palace", 
-          value: "sushi-palace", 
-          description: "Fresh sushi and Japanese specialties",
+          name: "Restaurant-A", 
+          value: "restaurant-a-brooklyn", 
+          description: "Premier dining experience with a diverse menu",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "brooklyn" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-A", 
+          value: "restaurant-a-queens", 
+          description: "Premier dining experience with a diverse menu",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "queens" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-A", 
+          value: "restaurant-a-downtown", 
+          description: "Premier dining experience with a diverse menu",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "downtown" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-A", 
+          value: "restaurant-a-hollywood", 
+          description: "Premier dining experience with a diverse menu",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "hollywood" 
+      },
+      
+      // Restaurant B for each location
+      { 
+        data: { 
+          name: "Restaurant-B", 
+          value: "restaurant-b-manhattan", 
+          description: "Casual dining with specialty dishes and drinks",
           locationId: 0,
           imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
         }, 
@@ -144,9 +187,51 @@ export class MemStorage implements IStorage {
       },
       { 
         data: { 
-          name: "Burger Joint", 
-          value: "burger-joint", 
-          description: "Juicy burgers and hand-cut fries",
+          name: "Restaurant-B", 
+          value: "restaurant-b-brooklyn", 
+          description: "Casual dining with specialty dishes and drinks",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "brooklyn" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-B", 
+          value: "restaurant-b-queens", 
+          description: "Casual dining with specialty dishes and drinks",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "queens" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-B", 
+          value: "restaurant-b-downtown", 
+          description: "Casual dining with specialty dishes and drinks",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "downtown" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-B", 
+          value: "restaurant-b-hollywood", 
+          description: "Casual dining with specialty dishes and drinks",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "hollywood" 
+      },
+      
+      // Restaurant C for each location
+      { 
+        data: { 
+          name: "Restaurant-C", 
+          value: "restaurant-c-manhattan", 
+          description: "Fast and delicious food options for everyone",
           locationId: 0,
           imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
         }, 
@@ -154,13 +239,43 @@ export class MemStorage implements IStorage {
       },
       { 
         data: { 
-          name: "Brooklyn Pizza Place", 
-          value: "pizza-place", 
-          description: "New York style pizza by the slice",
+          name: "Restaurant-C", 
+          value: "restaurant-c-brooklyn", 
+          description: "Fast and delicious food options for everyone",
           locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
         }, 
         locationValue: "brooklyn" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-C", 
+          value: "restaurant-c-queens", 
+          description: "Fast and delicious food options for everyone",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "queens" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-C", 
+          value: "restaurant-c-downtown", 
+          description: "Fast and delicious food options for everyone",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "downtown" 
+      },
+      { 
+        data: { 
+          name: "Restaurant-C", 
+          value: "restaurant-c-hollywood", 
+          description: "Fast and delicious food options for everyone",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "hollywood" 
       }
     ];
     
@@ -172,70 +287,151 @@ export class MemStorage implements IStorage {
       }
     });
 
-    // Menu Items for Italian Bistro
+    // Menu Items for the restaurants
     setTimeout(async () => {
-      const restaurant = await this.getRestaurantByValue("italian-bistro");
-      if (restaurant) {
-        const menuItems: InsertMenuItem[] = [
+      // Menu items for Restaurant-A in Manhattan
+      const restaurantA = await this.getRestaurantByValue("restaurant-a-manhattan");
+      if (restaurantA) {
+        const menuItemsA: InsertMenuItem[] = [
           {
-            name: "Margherita Pizza",
-            description: "Classic pizza with tomatoes, mozzarella, and fresh basil.",
-            price: "12.99",
-            imageUrl: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurant.id,
+            name: "Special Steak",
+            description: "Premium cut steak cooked to perfection with signature seasoning.",
+            price: "29.99",
+            imageUrl: "https://images.unsplash.com/photo-1504973960431-1c467e159aa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantA.id,
             category: "Main Courses",
             isPopular: true
           },
           {
-            name: "Pasta Carbonara",
-            description: "Creamy pasta with crispy bacon, egg, and parmesan cheese.",
-            price: "14.50",
-            imageUrl: "https://images.unsplash.com/photo-1608756687911-aa1599ab3bd9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurant.id,
+            name: "Seafood Platter",
+            description: "Fresh assortment of seafood including shrimp, crab, and fish.",
+            price: "32.50",
+            imageUrl: "https://images.unsplash.com/photo-1534709867132-ea6fe01f9a8a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantA.id,
             category: "Main Courses",
-            isPopular: false
+            isPopular: true
           },
           {
-            name: "Caesar Salad",
-            description: "Fresh romaine lettuce with croutons, parmesan, and Caesar dressing.",
-            price: "9.99",
-            imageUrl: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurant.id,
+            name: "Truffle Fries",
+            description: "Crispy fries drizzled with truffle oil and parmesan.",
+            price: "10.99",
+            imageUrl: "https://images.unsplash.com/photo-1585109649139-366815a0d713?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantA.id,
             category: "Appetizers",
             isPopular: false
-          },
+          }
+        ];
+
+        menuItemsA.forEach(item => this.createMenuItem(item));
+      }
+
+      // Menu items for Restaurant-B in Manhattan
+      const restaurantB = await this.getRestaurantByValue("restaurant-b-manhattan");
+      if (restaurantB) {
+        const menuItemsB: InsertMenuItem[] = [
           {
-            name: "Chocolate Lava Cake",
-            description: "Warm chocolate cake with a molten center, served with vanilla ice cream.",
-            price: "7.99",
-            imageUrl: "https://images.pexels.com/photos/132694/pexels-photo-132694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400",
-            restaurantId: restaurant.id,
-            category: "Desserts",
-            isPopular: false
-          },
-          {
-            name: "Grilled Salmon",
-            description: "Fresh salmon fillet grilled to perfection with seasonal vegetables.",
-            price: "18.50",
-            imageUrl: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurant.id,
+            name: "Gourmet Burger",
+            description: "Premium beef patty with artisan cheese and special sauce.",
+            price: "15.99",
+            imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantB.id,
             category: "Main Courses",
-            isPopular: false
+            isPopular: true
           },
           {
-            name: "Fruit Smoothie",
-            description: "Refreshing blend of seasonal fruits with yogurt and honey.",
-            price: "5.99",
-            imageUrl: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurant.id,
+            name: "Chicken Wings",
+            description: "Crispy wings with choice of sauce: buffalo, BBQ, or honey garlic.",
+            price: "13.50",
+            imageUrl: "https://images.unsplash.com/photo-1601002277582-57933a3b2743?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantB.id,
+            category: "Appetizers",
+            isPopular: true
+          },
+          {
+            name: "Craft Beer",
+            description: "Selection of locally brewed craft beers.",
+            price: "7.99",
+            imageUrl: "https://images.unsplash.com/photo-1555658636-6e4a36218be7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantB.id,
             category: "Beverages",
             isPopular: false
           }
         ];
 
-        menuItems.forEach(item => this.createMenuItem(item));
+        menuItemsB.forEach(item => this.createMenuItem(item));
       }
-    }, 100);
+
+      // Menu items for Restaurant-C in Manhattan
+      const restaurantC = await this.getRestaurantByValue("restaurant-c-manhattan");
+      if (restaurantC) {
+        const menuItemsC: InsertMenuItem[] = [
+          {
+            name: "Quick Meal Combo",
+            description: "Burger, fries and soft drink combo for a quick meal.",
+            price: "9.99",
+            imageUrl: "https://images.unsplash.com/photo-1610614991969-ceeb293e7ff5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantC.id,
+            category: "Combos",
+            isPopular: true
+          },
+          {
+            name: "Chicken Salad",
+            description: "Fresh salad with grilled chicken, avocado, and light dressing.",
+            price: "8.50",
+            imageUrl: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantC.id,
+            category: "Healthy Options",
+            isPopular: true
+          },
+          {
+            name: "Ice Cream Sundae",
+            description: "Vanilla ice cream with choice of toppings and whipped cream.",
+            price: "4.99",
+            imageUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurantC.id,
+            category: "Desserts",
+            isPopular: false
+          }
+        ];
+
+        menuItemsC.forEach(item => this.createMenuItem(item));
+      }
+      
+      // Create the same menu items for each restaurant in Brooklyn
+      const restaurantABrooklyn = await this.getRestaurantByValue("restaurant-a-brooklyn");
+      const restaurantBBrooklyn = await this.getRestaurantByValue("restaurant-b-brooklyn");
+      const restaurantCBrooklyn = await this.getRestaurantByValue("restaurant-c-brooklyn");
+      
+      if (restaurantA && restaurantABrooklyn) {
+        const menuItemsA = await this.getMenuItemsByRestaurant(restaurantA.id);
+        menuItemsA.forEach(item => {
+          this.createMenuItem({
+            ...item,
+            restaurantId: restaurantABrooklyn.id
+          });
+        });
+      }
+      
+      if (restaurantB && restaurantBBrooklyn) {
+        const menuItemsB = await this.getMenuItemsByRestaurant(restaurantB.id);
+        menuItemsB.forEach(item => {
+          this.createMenuItem({
+            ...item,
+            restaurantId: restaurantBBrooklyn.id
+          });
+        });
+      }
+      
+      if (restaurantC && restaurantCBrooklyn) {
+        const menuItemsC = await this.getMenuItemsByRestaurant(restaurantC.id);
+        menuItemsC.forEach(item => {
+          this.createMenuItem({
+            ...item,
+            restaurantId: restaurantCBrooklyn.id
+          });
+        });
+      }
+    }, 500);
   }
 
   // User methods
@@ -342,7 +538,12 @@ export class MemStorage implements IStorage {
   
   async createRestaurant(insertRestaurant: InsertRestaurant): Promise<Restaurant> {
     const id = this.currentRestaurantId++;
-    const restaurant: Restaurant = { ...insertRestaurant, id };
+    const restaurant: Restaurant = { 
+      ...insertRestaurant, 
+      id,
+      description: insertRestaurant.description || null,
+      imageUrl: insertRestaurant.imageUrl || null
+    };
     this.restaurants.set(id, restaurant);
     return restaurant;
   }
