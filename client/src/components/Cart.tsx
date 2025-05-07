@@ -46,7 +46,14 @@ export function Cart({ onCheckout, onClose, isMobile = false }: CartProps) {
                 <div key={index} className="py-4 first:pt-0 flex items-center justify-between">
                   <div className="flex items-center">
                     <div className="flex-shrink-0 w-16 h-16 bg-muted rounded overflow-hidden mr-3">
-                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+                      <img 
+                        src={item.image} 
+                        alt={item.name} 
+                        className="w-full h-full object-cover" 
+                        onError={(e) => {
+                          e.currentTarget.src = "https://images.unsplash.com/photo-1563865436874-9aef32095fad?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400";
+                        }}
+                      />
                     </div>
                     <div>
                       <h4 className="font-medium">{item.name}</h4>

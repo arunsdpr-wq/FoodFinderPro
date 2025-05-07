@@ -73,7 +73,7 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
                   <Card key={item.id} className="overflow-hidden hover:shadow-md transition-shadow duration-200">
                     <div className="h-48 w-full overflow-hidden">
                       <img 
-                        src={item.image} 
+                        src={item.imageUrl} 
                         alt={item.name} 
                         className="w-full h-full object-cover"
                       />
@@ -85,7 +85,18 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
                       </div>
                       <p className="text-muted-foreground text-sm mb-4">{item.description}</p>
                       <Button 
-                        onClick={() => addToCart(item)}
+                        onClick={() => {
+                          // Adapt the item to match CartContext's expected format
+                          const adaptedItem = {
+                            id: item.id.toString(), // Convert number to string
+                            name: item.name,
+                            description: item.description,
+                            price: item.price,
+                            image: item.imageUrl, // Map imageUrl to image
+                            restaurantId: item.restaurantId.toString() // Convert number to string
+                          };
+                          addToCart(adaptedItem);
+                        }}
                         className="w-full"
                       >
                         <PlusIcon className="h-4 w-4 mr-2" /> Add to Cart
