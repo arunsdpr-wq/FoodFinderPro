@@ -1,83 +1,125 @@
-import { pgTable, text, serial, integer, doublePrecision, jsonb, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, decimal, timestamp, json } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
 // City schema
 export const cities = pgTable("cities", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
+  value: text("value").notNull().unique(),
 });
 
-export const insertCitySchema = createInsertSchema(cities);
+export const insertCitySchema = createInsertSchema(cities).pick({
+  name: true,
+  value: true,
+});
+
 export type InsertCity = z.infer<typeof insertCitySchema>;
 export type City = typeof cities.$inferSelect;
 
 // Location schema
 export const locations = pgTable("locations", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  cityId: text("city_id").notNull().references(() => cities.id),
+  value: text("value").notNull().unique(),
+  cityId: integer("city_id").notNull(),
 });
 
-export const insertLocationSchema = createInsertSchema(locations);
+export const insertLocationSchema = createInsertSchema(locations).pick({
+  name: true,
+  value: true,
+  cityId: true,
+});
+
 export type InsertLocation = z.infer<typeof insertLocationSchema>;
 export type Location = typeof locations.$inferSelect;
 
 // Restaurant schema
 export const restaurants = pgTable("restaurants", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  description: text("description").notNull(),
-  rating: text("rating").notNull(),
-  deliveryTime: text("delivery_time").notNull(),
-  coverImage: text("cover_image").notNull(),
-  locationId: text("location_id").notNull().references(() => locations.id),
+  value: text("value").notNull().unique(),
+  description: text("description"),
+  locationId: integer("location_id").notNull(),
+  imageUrl: text("image_url"),
 });
 
-export const insertRestaurantSchema = createInsertSchema(restaurants);
+export const insertRestaurantSchema = createInsertSchema(restaurants).pick({
+  name: true,
+  value: true,
+  description: true,
+  locationId: true,
+  imageUrl: true,
+});
+
 export type InsertRestaurant = z.infer<typeof insertRestaurantSchema>;
 export type Restaurant = typeof restaurants.$inferSelect;
 
-// Menu item schema
+// MenuItem schema
 export const menuItems = pgTable("menu_items", {
-  id: text("id").primaryKey(),
+  id: serial("id").primaryKey(),
   name: text("name").notNull(),
-  description: text("description").notNull(),
-  price: doublePrecision("price").notNull(),
-  image: text("image").notNull(),
-  restaurantId: text("restaurant_id").notNull().references(() => restaurants.id),
+  description: text("description"),
+  price: decimal("price", { precision: 10, scale: 2 }).notNull(),
+  imageUrl: text("image_url"),
+  restaurantId: integer("restaurant_id").notNull(),
+  category: text("category").notNull(),
+  isPopular: boolean("is_popular").default(false),
 });
 
-export const insertMenuItemSchema = createInsertSchema(menuItems);
+export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
+  name: true,
+  description: true,
+  price: true,
+  imageUrl: true,
+  restaurantId: true,
+  category: true,
+  isPopular: true,
+});
+
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
 // Order schema
 export const orders = pgTable("orders", {
-  id: text("id").primaryKey(),
-  restaurantId: text("restaurant_id").notNull().references(() => restaurants.id),
-  customerInfo: jsonb("customer_info").notNull(),
-  status: text("status").notNull().default("order_received"),
-  items: jsonb("items").notNull(),
-  subtotal: doublePrecision("subtotal").notNull(),
-  deliveryFee: doublePrecision("delivery_fee").notNull(),
-  tax: doublePrecision("tax").notNull(),
-  total: doublePrecision("total").notNull(),
-  estimatedDeliveryTime: text("estimated_delivery_time").notNull(),
+  id: serial("id").primaryKey(),
+  orderNumber: text("order_number").notNull().unique(),
+  customerName: text("customer_name").notNull(),
+  customerPhone: text("customer_phone").notNull(),
+  deliveryAddress: text("delivery_address").notNull(),
+  zipCode: text("zip_code").notNull(),
+  deliveryInstructions: text("delivery_instructions"),
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  status: text("status").notNull().default("confirmed"),
+  paymentMethod: text("payment_method").notNull(),
+  restaurantId: integer("restaurant_id").notNull(),
+  orderItems: json("order_items").$type<OrderItem[]>().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertOrderSchema = createInsertSchema(orders).omit({
-  id: true,
-  status: true,
-  estimatedDeliveryTime: true,
-  createdAt: true,
+export type OrderItem = {
+  menuItemId: number;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+export const insertOrderSchema = createInsertSchema(orders).pick({
+  customerName: true,
+  customerPhone: true,
+  deliveryAddress: true,
+  zipCode: true,
+  deliveryInstructions: true,
+  totalAmount: true,
+  paymentMethod: true,
+  restaurantId: true,
+  orderItems: true,
 });
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
 
-// Extra schemas for validation
+// Users schema (keeping existing schema)
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),

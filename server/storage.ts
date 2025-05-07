@@ -1,63 +1,241 @@
+import { v4 as uuidv4 } from "uuid";
 import { 
-  City, InsertCity,
-  Location, InsertLocation,
-  Restaurant, InsertRestaurant,
-  MenuItem, InsertMenuItem,
-  Order, InsertOrder,
-  User, InsertUser
+  City, InsertCity, 
+  Location, InsertLocation, 
+  Restaurant, InsertRestaurant, 
+  MenuItem, InsertMenuItem, 
+  Order, InsertOrder, OrderItem,
+  User, InsertUser 
 } from "@shared/schema";
-import { generateOrderId } from "../client/src/lib/utils";
 
-// Extend interface with CRUD methods for our application
 export interface IStorage {
-  // User methods (from original template)
+  // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   
   // City methods
-  getAllCities(): Promise<City[]>;
-  getCity(id: string): Promise<City | undefined>;
+  getCities(): Promise<City[]>;
+  getCityById(id: number): Promise<City | undefined>;
+  getCityByValue(value: string): Promise<City | undefined>;
+  createCity(city: InsertCity): Promise<City>;
   
   // Location methods
-  getLocationsByCity(cityId: string): Promise<Location[]>;
-  getLocation(id: string): Promise<Location | undefined>;
+  getLocations(): Promise<Location[]>;
+  getLocationsByCity(cityId: number): Promise<Location[]>;
+  getLocationsByValue(values: string[]): Promise<Location[]>;
+  getLocationById(id: number): Promise<Location | undefined>;
+  getLocationByValue(value: string): Promise<Location | undefined>;
+  createLocation(location: InsertLocation): Promise<Location>;
   
   // Restaurant methods
-  getRestaurantsByLocation(locationId: string): Promise<Restaurant[]>;
-  getRestaurant(id: string): Promise<Restaurant | undefined>;
+  getRestaurants(): Promise<Restaurant[]>;
+  getRestaurantsByLocation(locationId: number): Promise<Restaurant[]>;
+  getRestaurantsByLocationValue(locationValue: string): Promise<Restaurant[]>;
+  getRestaurantById(id: number): Promise<Restaurant | undefined>;
+  getRestaurantByValue(value: string): Promise<Restaurant | undefined>;
+  createRestaurant(restaurant: InsertRestaurant): Promise<Restaurant>;
   
-  // Menu item methods
-  getMenuItemsByRestaurant(restaurantId: string): Promise<MenuItem[]>;
-  getMenuItem(id: string): Promise<MenuItem | undefined>;
+  // MenuItem methods
+  getMenuItems(): Promise<MenuItem[]>;
+  getMenuItemsByRestaurant(restaurantId: number): Promise<MenuItem[]>;
+  getMenuItemsByRestaurantValue(restaurantValue: string): Promise<MenuItem[]>;
+  getMenuItemById(id: number): Promise<MenuItem | undefined>;
+  createMenuItem(menuItem: InsertMenuItem): Promise<MenuItem>;
   
   // Order methods
+  getOrders(): Promise<Order[]>;
+  getOrderById(id: number): Promise<Order | undefined>;
+  getOrderByOrderNumber(orderNumber: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
-  getOrder(id: string): Promise<Order | undefined>;
-  updateOrderStatus(id: string, status: string): Promise<Order | undefined>;
+  updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
 }
 
 export class MemStorage implements IStorage {
   private users: Map<number, User>;
-  private cities: Map<string, City>;
-  private locations: Map<string, Location>;
-  private restaurants: Map<string, Restaurant>;
-  private menuItems: Map<string, MenuItem>;
-  private orders: Map<string, Order>;
+  private cities: Map<number, City>;
+  private locations: Map<number, Location>;
+  private restaurants: Map<number, Restaurant>;
+  private menuItems: Map<number, MenuItem>;
+  private orders: Map<number, Order>;
+  
   currentUserId: number;
+  currentCityId: number;
+  currentLocationId: number;
+  currentRestaurantId: number;
+  currentMenuItemId: number;
+  currentOrderId: number;
 
   constructor() {
-    // Initialize storage
     this.users = new Map();
     this.cities = new Map();
     this.locations = new Map();
     this.restaurants = new Map();
     this.menuItems = new Map();
     this.orders = new Map();
-    this.currentUserId = 1;
     
-    // Seed sample data
-    this.seedSampleData();
+    this.currentUserId = 1;
+    this.currentCityId = 1;
+    this.currentLocationId = 1;
+    this.currentRestaurantId = 1;
+    this.currentMenuItemId = 1;
+    this.currentOrderId = 1;
+    
+    // Initialize with sample data
+    this.initializeData();
+  }
+
+  private initializeData() {
+    // Cities
+    const cityData: InsertCity[] = [
+      { name: "New York", value: "new-york" },
+      { name: "Los Angeles", value: "los-angeles" },
+      { name: "Chicago", value: "chicago" },
+      { name: "Houston", value: "houston" }
+    ];
+    
+    cityData.forEach(city => this.createCity(city));
+
+    // Locations
+    const locationData: { data: InsertLocation, cityValue: string }[] = [
+      { data: { name: "Manhattan", value: "manhattan", cityId: 0 }, cityValue: "new-york" },
+      { data: { name: "Brooklyn", value: "brooklyn", cityId: 0 }, cityValue: "new-york" },
+      { data: { name: "Queens", value: "queens", cityId: 0 }, cityValue: "new-york" },
+      { data: { name: "Downtown LA", value: "downtown", cityId: 0 }, cityValue: "los-angeles" },
+      { data: { name: "Hollywood", value: "hollywood", cityId: 0 }, cityValue: "los-angeles" },
+      { data: { name: "Santa Monica", value: "santa-monica", cityId: 0 }, cityValue: "los-angeles" },
+      { data: { name: "The Loop", value: "loop", cityId: 0 }, cityValue: "chicago" },
+      { data: { name: "Lincoln Park", value: "lincoln-park", cityId: 0 }, cityValue: "chicago" },
+      { data: { name: "Wicker Park", value: "wicker-park", cityId: 0 }, cityValue: "chicago" },
+      { data: { name: "Downtown Houston", value: "downtown-houston", cityId: 0 }, cityValue: "houston" },
+      { data: { name: "Midtown", value: "midtown", cityId: 0 }, cityValue: "houston" },
+      { data: { name: "Rice Village", value: "rice-village", cityId: 0 }, cityValue: "houston" }
+    ];
+    
+    locationData.forEach(async location => {
+      const city = await this.getCityByValue(location.cityValue);
+      if (city) {
+        location.data.cityId = city.id;
+        await this.createLocation(location.data);
+      }
+    });
+
+    // Restaurants
+    const restaurantData: { data: InsertRestaurant, locationValue: string }[] = [
+      { 
+        data: { 
+          name: "Italian Bistro", 
+          value: "italian-bistro", 
+          description: "Authentic Italian cuisine in a cozy atmosphere",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "manhattan" 
+      },
+      { 
+        data: { 
+          name: "Sushi Palace", 
+          value: "sushi-palace", 
+          description: "Fresh sushi and Japanese specialties",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "manhattan" 
+      },
+      { 
+        data: { 
+          name: "Burger Joint", 
+          value: "burger-joint", 
+          description: "Juicy burgers and hand-cut fries",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "manhattan" 
+      },
+      { 
+        data: { 
+          name: "Brooklyn Pizza Place", 
+          value: "pizza-place", 
+          description: "New York style pizza by the slice",
+          locationId: 0,
+          imageUrl: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
+        }, 
+        locationValue: "brooklyn" 
+      }
+    ];
+    
+    restaurantData.forEach(async restaurant => {
+      const location = await this.getLocationByValue(restaurant.locationValue);
+      if (location) {
+        restaurant.data.locationId = location.id;
+        await this.createRestaurant(restaurant.data);
+      }
+    });
+
+    // Menu Items for Italian Bistro
+    setTimeout(async () => {
+      const restaurant = await this.getRestaurantByValue("italian-bistro");
+      if (restaurant) {
+        const menuItems: InsertMenuItem[] = [
+          {
+            name: "Margherita Pizza",
+            description: "Classic pizza with tomatoes, mozzarella, and fresh basil.",
+            price: "12.99",
+            imageUrl: "https://images.unsplash.com/photo-1604382354936-07c5d9983bd3?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Main Courses",
+            isPopular: true
+          },
+          {
+            name: "Pasta Carbonara",
+            description: "Creamy pasta with crispy bacon, egg, and parmesan cheese.",
+            price: "14.50",
+            imageUrl: "https://images.unsplash.com/photo-1608756687911-aa1599ab3bd9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Main Courses",
+            isPopular: false
+          },
+          {
+            name: "Caesar Salad",
+            description: "Fresh romaine lettuce with croutons, parmesan, and Caesar dressing.",
+            price: "9.99",
+            imageUrl: "https://images.unsplash.com/photo-1550304943-4f24f54ddde9?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Appetizers",
+            isPopular: false
+          },
+          {
+            name: "Chocolate Lava Cake",
+            description: "Warm chocolate cake with a molten center, served with vanilla ice cream.",
+            price: "7.99",
+            imageUrl: "https://images.pexels.com/photos/132694/pexels-photo-132694.jpeg?auto=compress&cs=tinysrgb&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Desserts",
+            isPopular: false
+          },
+          {
+            name: "Grilled Salmon",
+            description: "Fresh salmon fillet grilled to perfection with seasonal vegetables.",
+            price: "18.50",
+            imageUrl: "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Main Courses",
+            isPopular: false
+          },
+          {
+            name: "Fruit Smoothie",
+            description: "Refreshing blend of seasonal fruits with yogurt and honey.",
+            price: "5.99",
+            imageUrl: "https://images.unsplash.com/photo-1505252585461-04db1eb84625?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
+            restaurantId: restaurant.id,
+            category: "Beverages",
+            isPopular: false
+          }
+        ];
+
+        menuItems.forEach(item => this.createMenuItem(item));
+      }
+    }, 100);
   }
 
   // User methods
@@ -79,209 +257,174 @@ export class MemStorage implements IStorage {
   }
   
   // City methods
-  async getAllCities(): Promise<City[]> {
+  async getCities(): Promise<City[]> {
     return Array.from(this.cities.values());
   }
   
-  async getCity(id: string): Promise<City | undefined> {
+  async getCityById(id: number): Promise<City | undefined> {
     return this.cities.get(id);
   }
   
+  async getCityByValue(value: string): Promise<City | undefined> {
+    return Array.from(this.cities.values()).find(city => city.value === value);
+  }
+  
+  async createCity(insertCity: InsertCity): Promise<City> {
+    const id = this.currentCityId++;
+    const city: City = { ...insertCity, id };
+    this.cities.set(id, city);
+    return city;
+  }
+  
   // Location methods
-  async getLocationsByCity(cityId: string): Promise<Location[]> {
+  async getLocations(): Promise<Location[]> {
+    return Array.from(this.locations.values());
+  }
+  
+  async getLocationsByCity(cityId: number): Promise<Location[]> {
     return Array.from(this.locations.values()).filter(
-      (location) => location.cityId === cityId
+      location => location.cityId === cityId
     );
   }
   
-  async getLocation(id: string): Promise<Location | undefined> {
+  async getLocationsByValue(values: string[]): Promise<Location[]> {
+    return Array.from(this.locations.values()).filter(
+      location => values.includes(location.value)
+    );
+  }
+  
+  async getLocationById(id: number): Promise<Location | undefined> {
     return this.locations.get(id);
   }
   
-  // Restaurant methods
-  async getRestaurantsByLocation(locationId: string): Promise<Restaurant[]> {
-    return Array.from(this.restaurants.values()).filter(
-      (restaurant) => restaurant.locationId === locationId
+  async getLocationByValue(value: string): Promise<Location | undefined> {
+    return Array.from(this.locations.values()).find(
+      location => location.value === value
     );
   }
   
-  async getRestaurant(id: string): Promise<Restaurant | undefined> {
+  async createLocation(insertLocation: InsertLocation): Promise<Location> {
+    const id = this.currentLocationId++;
+    const location: Location = { ...insertLocation, id };
+    this.locations.set(id, location);
+    return location;
+  }
+  
+  // Restaurant methods
+  async getRestaurants(): Promise<Restaurant[]> {
+    return Array.from(this.restaurants.values());
+  }
+  
+  async getRestaurantsByLocation(locationId: number): Promise<Restaurant[]> {
+    return Array.from(this.restaurants.values()).filter(
+      restaurant => restaurant.locationId === locationId
+    );
+  }
+  
+  async getRestaurantsByLocationValue(locationValue: string): Promise<Restaurant[]> {
+    const location = await this.getLocationByValue(locationValue);
+    if (!location) return [];
+    
+    return Array.from(this.restaurants.values()).filter(
+      restaurant => restaurant.locationId === location.id
+    );
+  }
+  
+  async getRestaurantById(id: number): Promise<Restaurant | undefined> {
     return this.restaurants.get(id);
   }
   
-  // Menu item methods
-  async getMenuItemsByRestaurant(restaurantId: string): Promise<MenuItem[]> {
-    return Array.from(this.menuItems.values()).filter(
-      (menuItem) => menuItem.restaurantId === restaurantId
+  async getRestaurantByValue(value: string): Promise<Restaurant | undefined> {
+    return Array.from(this.restaurants.values()).find(
+      restaurant => restaurant.value === value
     );
   }
   
-  async getMenuItem(id: string): Promise<MenuItem | undefined> {
+  async createRestaurant(insertRestaurant: InsertRestaurant): Promise<Restaurant> {
+    const id = this.currentRestaurantId++;
+    const restaurant: Restaurant = { ...insertRestaurant, id };
+    this.restaurants.set(id, restaurant);
+    return restaurant;
+  }
+  
+  // MenuItem methods
+  async getMenuItems(): Promise<MenuItem[]> {
+    return Array.from(this.menuItems.values());
+  }
+  
+  async getMenuItemsByRestaurant(restaurantId: number): Promise<MenuItem[]> {
+    return Array.from(this.menuItems.values()).filter(
+      menuItem => menuItem.restaurantId === restaurantId
+    );
+  }
+  
+  async getMenuItemsByRestaurantValue(restaurantValue: string): Promise<MenuItem[]> {
+    const restaurant = await this.getRestaurantByValue(restaurantValue);
+    if (!restaurant) return [];
+    
+    return Array.from(this.menuItems.values()).filter(
+      menuItem => menuItem.restaurantId === restaurant.id
+    );
+  }
+  
+  async getMenuItemById(id: number): Promise<MenuItem | undefined> {
     return this.menuItems.get(id);
   }
   
+  async createMenuItem(insertMenuItem: InsertMenuItem): Promise<MenuItem> {
+    const id = this.currentMenuItemId++;
+    const menuItem: MenuItem = { 
+      ...insertMenuItem, 
+      id,
+      price: typeof insertMenuItem.price === 'string' 
+        ? parseFloat(insertMenuItem.price) 
+        : insertMenuItem.price
+    };
+    this.menuItems.set(id, menuItem);
+    return menuItem;
+  }
+  
   // Order methods
+  async getOrders(): Promise<Order[]> {
+    return Array.from(this.orders.values());
+  }
+  
+  async getOrderById(id: number): Promise<Order | undefined> {
+    return this.orders.get(id);
+  }
+  
+  async getOrderByOrderNumber(orderNumber: string): Promise<Order | undefined> {
+    return Array.from(this.orders.values()).find(
+      order => order.orderNumber === orderNumber
+    );
+  }
+  
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
-    const id = generateOrderId();
+    const id = this.currentOrderId++;
+    const orderNumber = `FE${Math.floor(10000 + Math.random() * 90000)}`;
+    
     const order: Order = { 
       ...insertOrder, 
       id,
-      status: "order_received",
-      estimatedDeliveryTime: "30-45 minutes",
-      createdAt: new Date()
+      orderNumber,
+      status: "confirmed",
+      createdAt: new Date(),
+      totalAmount: typeof insertOrder.totalAmount === 'string' 
+        ? parseFloat(insertOrder.totalAmount) 
+        : insertOrder.totalAmount
     };
+    
     this.orders.set(id, order);
     return order;
   }
   
-  async getOrder(id: string): Promise<Order | undefined> {
-    return this.orders.get(id);
-  }
-  
-  async updateOrderStatus(id: string, status: string): Promise<Order | undefined> {
-    const order = this.orders.get(id);
+  async updateOrderStatus(id: number, status: string): Promise<Order | undefined> {
+    const order = await this.getOrderById(id);
     if (!order) return undefined;
     
-    const updatedOrder = { ...order, status };
+    const updatedOrder: Order = { ...order, status };
     this.orders.set(id, updatedOrder);
     return updatedOrder;
-  }
-  
-  // Seed sample data
-  private seedSampleData() {
-    // Cities
-    const cities: City[] = [
-      { id: 'nyc', name: 'New York City' },
-      { id: 'la', name: 'Los Angeles' },
-      { id: 'chi', name: 'Chicago' },
-      { id: 'mia', name: 'Miami' }
-    ];
-    
-    cities.forEach(city => this.cities.set(city.id, city));
-    
-    // Locations
-    const locations: Location[] = [
-      { id: 'nyc-mnh', name: 'Manhattan', cityId: 'nyc' },
-      { id: 'nyc-bkn', name: 'Brooklyn', cityId: 'nyc' },
-      { id: 'nyc-qns', name: 'Queens', cityId: 'nyc' },
-      { id: 'la-dtla', name: 'Downtown LA', cityId: 'la' },
-      { id: 'la-hlwd', name: 'Hollywood', cityId: 'la' },
-      { id: 'la-sma', name: 'Santa Monica', cityId: 'la' },
-      { id: 'chi-loop', name: 'The Loop', cityId: 'chi' },
-      { id: 'chi-lns', name: 'Lincoln Square', cityId: 'chi' },
-      { id: 'mia-sb', name: 'South Beach', cityId: 'mia' },
-      { id: 'mia-dt', name: 'Downtown', cityId: 'mia' }
-    ];
-    
-    locations.forEach(location => this.locations.set(location.id, location));
-    
-    // Restaurants
-    const restaurants: Restaurant[] = [
-      { 
-        id: 'r1', 
-        name: 'Burger Haven', 
-        locationId: 'nyc-mnh', 
-        rating: '4.8',
-        deliveryTime: '25-35 min',
-        description: 'Premium burgers made with 100% Angus beef and fresh ingredients.',
-        coverImage: 'https://images.unsplash.com/photo-1550317138-10000687a72b?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400'
-      },
-      { 
-        id: 'r2', 
-        name: 'Pizza Paradise', 
-        locationId: 'nyc-bkn', 
-        rating: '4.6',
-        deliveryTime: '30-40 min',
-        description: 'Authentic Italian pizzas baked in a wood-fired oven.',
-        coverImage: 'https://images.unsplash.com/photo-1590947132387-155cc02f3212?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400'
-      },
-      { 
-        id: 'r3', 
-        name: 'Sushi Sensation', 
-        locationId: 'la-sma', 
-        rating: '4.9',
-        deliveryTime: '20-30 min',
-        description: 'Fresh, high-quality sushi and Japanese specialties.',
-        coverImage: 'https://images.unsplash.com/photo-1617196035154-421e3b688fe2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400'
-      }
-    ];
-    
-    restaurants.forEach(restaurant => this.restaurants.set(restaurant.id, restaurant));
-    
-    // Menu Items
-    const menuItems: MenuItem[] = [
-      // Burger Haven Menu
-      { 
-        id: 'm1', 
-        restaurantId: 'r1', 
-        name: 'Classic Cheeseburger', 
-        description: 'Angus beef patty with American cheese, lettuce, tomato, and special sauce.', 
-        price: 12.99,
-        image: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      { 
-        id: 'm2', 
-        restaurantId: 'r1', 
-        name: 'Bacon BBQ Burger', 
-        description: 'Angus beef topped with crispy bacon, cheddar, and tangy BBQ sauce.', 
-        price: 14.99,
-        image: 'https://images.unsplash.com/photo-1565299507177-b0ac66763828?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      { 
-        id: 'm3', 
-        restaurantId: 'r1', 
-        name: 'Truffle Fries', 
-        description: 'Crispy fries tossed with truffle oil, parmesan, and herbs.', 
-        price: 8.99,
-        image: 'https://images.unsplash.com/photo-1573080496219-bb080dd4f877?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      { 
-        id: 'm4', 
-        restaurantId: 'r1', 
-        name: 'Chicken Sandwich', 
-        description: 'Crispy or grilled chicken with avocado, lettuce, and chipotle mayo.', 
-        price: 13.99,
-        image: 'https://images.unsplash.com/photo-1606755962773-d324e0a13086?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      
-      // Pizza Paradise Menu
-      { 
-        id: 'm5', 
-        restaurantId: 'r2', 
-        name: 'Margherita Pizza', 
-        description: 'Classic pizza with tomato sauce, fresh mozzarella, and basil.', 
-        price: 15.99,
-        image: 'https://images.unsplash.com/photo-1574071318508-1cdbab80d002?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      { 
-        id: 'm6', 
-        restaurantId: 'r2', 
-        name: 'Pepperoni Supreme', 
-        description: 'Loaded with pepperoni, bell peppers, olives, and mushrooms.', 
-        price: 17.99,
-        image: 'https://images.unsplash.com/photo-1628840042765-356cda07504e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      
-      // Sushi Sensation Menu
-      { 
-        id: 'm7', 
-        restaurantId: 'r3', 
-        name: 'California Roll', 
-        description: 'Crab, avocado, and cucumber wrapped in nori and sushi rice.', 
-        price: 10.99,
-        image: 'https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      },
-      { 
-        id: 'm8', 
-        restaurantId: 'r3', 
-        name: 'Sashimi Platter', 
-        description: 'Assortment of fresh raw fish slices with soy sauce and wasabi.', 
-        price: 24.99,
-        image: 'https://images.unsplash.com/photo-1611143669185-af224c5e3252?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&h=600'
-      }
-    ];
-    
-    menuItems.forEach(menuItem => this.menuItems.set(menuItem.id, menuItem));
   }
 }
 

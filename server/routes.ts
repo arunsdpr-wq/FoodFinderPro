@@ -1,57 +1,55 @@
-import type { Express } from "express";
+import type { Express, Request, Response } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { z } from "zod";
 import { insertOrderSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Cities endpoint
-  app.get("/api/cities", async (_req, res) => {
+  // API Routes - prefix with /api
+  
+  // Get all cities
+  app.get("/api/cities", async (req: Request, res: Response) => {
     try {
-      const cities = await storage.getAllCities();
+      const cities = await storage.getCities();
       res.json(cities);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch cities" });
     }
   });
-
-  // Locations by city endpoint
-  app.get("/api/locations", async (req, res) => {
+  
+  // Get locations by city
+  app.get("/api/cities/:cityValue/locations", async (req: Request, res: Response) => {
     try {
-      const cityId = req.query.cityId as string;
+      const { cityValue } = req.params;
+      const city = await storage.getCityByValue(cityValue);
       
-      if (!cityId) {
-        return res.status(400).json({ message: "City ID is required" });
+      if (!city) {
+        return res.status(404).json({ message: "City not found" });
       }
       
-      const locations = await storage.getLocationsByCity(cityId);
+      const locations = await storage.getLocationsByCity(city.id);
       res.json(locations);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch locations" });
     }
   });
-
-  // Restaurants by location endpoint
-  app.get("/api/restaurants", async (req, res) => {
+  
+  // Get restaurants by location
+  app.get("/api/locations/:locationValue/restaurants", async (req: Request, res: Response) => {
     try {
-      const locationId = req.query.locationId as string;
-      
-      if (!locationId) {
-        return res.status(400).json({ message: "Location ID is required" });
-      }
-      
-      const restaurants = await storage.getRestaurantsByLocation(locationId);
+      const { locationValue } = req.params;
+      const restaurants = await storage.getRestaurantsByLocationValue(locationValue);
       res.json(restaurants);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch restaurants" });
     }
   });
-
-  // Restaurant details endpoint
-  app.get("/api/restaurants/details/:id", async (req, res) => {
+  
+  // Get restaurant by value
+  app.get("/api/restaurants/:restaurantValue", async (req: Request, res: Response) => {
     try {
-      const restaurantId = req.params.id;
-      const restaurant = await storage.getRestaurant(restaurantId);
+      const { restaurantValue } = req.params;
+      const restaurant = await storage.getRestaurantByValue(restaurantValue);
       
       if (!restaurant) {
         return res.status(404).json({ message: "Restaurant not found" });
@@ -59,63 +57,47 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(restaurant);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch restaurant details" });
+      res.status(500).json({ message: "Failed to fetch restaurant" });
     }
   });
-
-  // Menu items by restaurant endpoint
-  app.get("/api/menu", async (req, res) => {
+  
+  // Get menu items by restaurant
+  app.get("/api/restaurants/:restaurantValue/menu", async (req: Request, res: Response) => {
     try {
-      const restaurantId = req.query.restaurantId as string;
-      
-      if (!restaurantId) {
-        return res.status(400).json({ message: "Restaurant ID is required" });
-      }
-      
-      const menuItems = await storage.getMenuItemsByRestaurant(restaurantId);
+      const { restaurantValue } = req.params;
+      const menuItems = await storage.getMenuItemsByRestaurantValue(restaurantValue);
       res.json(menuItems);
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch menu items" });
     }
   });
-
-  // Create order endpoint
-  app.post("/api/orders", async (req, res) => {
+  
+  // Get menu item by id
+  app.get("/api/menu-items/:id", async (req: Request, res: Response) => {
     try {
-      // Validate the request body
-      const orderSchema = insertOrderSchema.extend({
-        customerInfo: z.object({
-          firstName: z.string().min(1, "First name is required"),
-          lastName: z.string().min(1, "Last name is required"),
-          address: z.string().min(5, "Address is required"),
-          phone: z.string().min(10, "Valid phone number is required"),
-          notes: z.string().optional(),
-        }),
-        paymentInfo: z.object({
-          cardNumber: z.string().min(16, "Card number is required").max(16),
-          expDate: z.string().min(5, "Expiration date is required"),
-          cvv: z.string().min(3, "CVV is required").max(4),
-          cardName: z.string().min(1, "Name on card is required"),
-        }),
-      });
+      const id = parseInt(req.params.id);
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid menu item ID" });
+      }
       
-      const validatedData = orderSchema.parse(req.body);
+      const menuItem = await storage.getMenuItemById(id);
       
-      // Create the order
-      const order = await storage.createOrder({
-        restaurantId: validatedData.restaurantId,
-        customerInfo: validatedData.customerInfo,
-        items: validatedData.items,
-        subtotal: validatedData.subtotal,
-        deliveryFee: validatedData.deliveryFee,
-        tax: validatedData.tax,
-        total: validatedData.total,
-      });
+      if (!menuItem) {
+        return res.status(404).json({ message: "Menu item not found" });
+      }
       
-      res.status(201).json({ 
-        message: "Order created successfully", 
-        orderId: order.id 
-      });
+      res.json(menuItem);
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch menu item" });
+    }
+  });
+  
+  // Create a new order
+  app.post("/api/orders", async (req: Request, res: Response) => {
+    try {
+      const orderData = insertOrderSchema.parse(req.body);
+      const order = await storage.createOrder(orderData);
+      res.status(201).json(order);
     } catch (error) {
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
@@ -123,16 +105,15 @@ export async function registerRoutes(app: Express): Promise<Server> {
           errors: error.errors 
         });
       }
-      
       res.status(500).json({ message: "Failed to create order" });
     }
   });
-
-  // Get order details endpoint
-  app.get("/api/orders/:id", async (req, res) => {
+  
+  // Get order by order number
+  app.get("/api/orders/:orderNumber", async (req: Request, res: Response) => {
     try {
-      const orderId = req.params.id;
-      const order = await storage.getOrder(orderId);
+      const { orderNumber } = req.params;
+      const order = await storage.getOrderByOrderNumber(orderNumber);
       
       if (!order) {
         return res.status(404).json({ message: "Order not found" });
@@ -140,32 +121,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       res.json(order);
     } catch (error) {
-      res.status(500).json({ message: "Failed to fetch order details" });
+      res.status(500).json({ message: "Failed to fetch order" });
     }
   });
-
-  // Update order status endpoint
-  app.patch("/api/orders/:id/status", async (req, res) => {
+  
+  // Update order status
+  app.patch("/api/orders/:id/status", async (req: Request, res: Response) => {
     try {
-      const orderId = req.params.id;
+      const id = parseInt(req.params.id);
       const { status } = req.body;
       
-      if (!status) {
+      if (isNaN(id)) {
+        return res.status(400).json({ message: "Invalid order ID" });
+      }
+      
+      if (!status || typeof status !== 'string') {
         return res.status(400).json({ message: "Status is required" });
       }
       
-      const validStatuses = ["order_received", "preparing", "out_for_delivery", "delivered"];
-      if (!validStatuses.includes(status)) {
-        return res.status(400).json({ message: "Invalid status" });
-      }
+      const order = await storage.updateOrderStatus(id, status);
       
-      const updatedOrder = await storage.updateOrderStatus(orderId, status);
-      
-      if (!updatedOrder) {
+      if (!order) {
         return res.status(404).json({ message: "Order not found" });
       }
       
-      res.json(updatedOrder);
+      res.json(order);
     } catch (error) {
       res.status(500).json({ message: "Failed to update order status" });
     }

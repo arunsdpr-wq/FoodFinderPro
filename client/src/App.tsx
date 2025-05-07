@@ -4,12 +4,19 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import NotFound from "@/pages/not-found";
-import FoodOrderingApp from "@/pages/FoodOrderingApp";
+import Home from "@/pages/home";
+import Menu from "@/pages/menu";
+import Checkout from "@/pages/checkout";
+import OrderConfirmation from "@/pages/order-confirmation";
+import MainLayout from "@/layouts/main-layout";
 
 function Router() {
   return (
     <Switch>
-      <Route path="/" component={FoodOrderingApp} />
+      <Route path="/" component={Home} />
+      <Route path="/menu/:restaurantValue" component={Menu} />
+      <Route path="/checkout" component={Checkout} />
+      <Route path="/order-confirmation/:orderNumber" component={OrderConfirmation} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -20,7 +27,9 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <MainLayout>
+          <Router />
+        </MainLayout>
       </TooltipProvider>
     </QueryClientProvider>
   );
