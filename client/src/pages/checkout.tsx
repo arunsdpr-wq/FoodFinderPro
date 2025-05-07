@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useCart } from "@/hooks/use-cart";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 import { apiRequest } from "@/lib/queryClient";
 import { StepIndicator } from "@/components/ui/step-indicator";
 import { Card, CardContent } from "@/components/ui/card";
@@ -65,6 +66,7 @@ export default function Checkout() {
   const [, navigate] = useLocation();
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
   const { 
     cartItems, 
@@ -81,13 +83,13 @@ export default function Checkout() {
     return null;
   }
   
-  // Form setup
+  // Form setup with user data if available
   const form = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
     defaultValues: {
-      customerName: "",
-      customerPhone: "",
-      deliveryAddress: "",
+      customerName: user?.fullName || "",
+      customerPhone: user?.phoneNumber || "",
+      deliveryAddress: user?.address || "",
       zipCode: "",
       deliveryInstructions: "",
       paymentMethod: "credit_card",
@@ -124,6 +126,8 @@ export default function Checkout() {
         totalAmount: getTotal().toString(),
         paymentMethod: data.paymentMethod,
         restaurantId: selectedRestaurantId,
+        // Include user ID if logged in
+        userId: user?.id || null,
         orderItems: cartItems.map(item => ({
           menuItemId: item.id,
           name: item.name,
