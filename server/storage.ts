@@ -5,7 +5,8 @@ import {
   Restaurant, InsertRestaurant, 
   MenuItem, InsertMenuItem, 
   Order, InsertOrder, OrderItem,
-  User, InsertUser 
+  User, InsertUser,
+  otpVerifications, InsertOtpVerificationSchema
 } from "@shared/schema";
 
 import session from "express-session";
@@ -14,8 +15,16 @@ export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
+  getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByPhone(phoneNumber: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  markUserAsVerified(userId: number): Promise<User>;
   getOrdersByUserId(userId: number): Promise<Order[]>;
+  
+  // OTP Verification methods
+  createOtp(userId: number, type: 'email' | 'phone'): Promise<string>;
+  verifyOtp(userId: number, otp: string): Promise<boolean>;
+  deleteExpiredOtps(): Promise<void>;
   
   // City methods
   getCities(): Promise<City[]>;

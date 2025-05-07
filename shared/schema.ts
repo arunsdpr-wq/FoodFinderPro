@@ -85,10 +85,21 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
-  email: text("email").notNull().unique(),
-  fullName: text("full_name"),
+  email: text("email"),
   phoneNumber: text("phone_number"),
+  isVerified: boolean("is_verified").default(false),
+  fullName: text("full_name"),
   address: text("address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// OTP verification schema
+export const otpVerifications = pgTable("otp_verifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  otp: text("otp").notNull(),
+  type: text("type").notNull(), // 'email' or 'phone'
+  expiresAt: timestamp("expires_at").notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -96,9 +107,16 @@ export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
   email: true,
-  fullName: true,
   phoneNumber: true,
+  fullName: true,
   address: true,
+});
+
+export const insertOtpVerificationSchema = createInsertSchema(otpVerifications).pick({
+  userId: true,
+  otp: true,
+  type: true,
+  expiresAt: true,
 });
 
 export type InsertUser = z.infer<typeof insertUserSchema>;

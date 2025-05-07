@@ -1,4 +1,4 @@
-import { eq, like, desc } from "drizzle-orm";
+import { eq, like, desc, lt, and } from "drizzle-orm";
 import { db } from "./db";
 import {
   City, InsertCity,
@@ -7,10 +7,12 @@ import {
   MenuItem, InsertMenuItem,
   Order, InsertOrder, OrderItem,
   User, InsertUser,
-  cities, locations, restaurants, menuItems, orders, users
+  cities, locations, restaurants, menuItems, orders, users,
+  otpVerifications, insertOtpVerificationSchema
 } from "@shared/schema";
 import { IStorage } from "./storage";
 import { v4 as uuidv4 } from "uuid";
+import { randomInt } from "crypto";
 
 export class DatabaseStorage implements IStorage {
   // User methods
@@ -24,17 +26,93 @@ export class DatabaseStorage implements IStorage {
     return user;
   }
 
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.email, email));
+    return user;
+  }
+
+  async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.phoneNumber, phoneNumber));
+    return user;
+  }
+
   async createUser(insertUser: InsertUser): Promise<User> {
     // Ensure null values are properly set for optional fields
     const userDataToInsert = {
       ...insertUser,
-      fullName: insertUser.fullName || null,
+      email: insertUser.email || null,
       phoneNumber: insertUser.phoneNumber || null,
-      address: insertUser.address || null
+      fullName: insertUser.fullName || null,
+      address: insertUser.address || null,
+      isVerified: false
     };
     
     const [user] = await db.insert(users).values(userDataToInsert).returning();
     return user;
+  }
+
+  async markUserAsVerified(userId: number): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ isVerified: true })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  // OTP Verification methods
+  async createOtp(userId: number, type: 'email' | 'phone'): Promise<string> {
+    // Generate a 6-digit OTP
+    const otp = randomInt(100000, 999999).toString();
+    
+    // Set expiration for 10 minutes from now
+    const expiresAt = new Date();
+    expiresAt.setMinutes(expiresAt.getMinutes() + 10);
+    
+    // Delete any existing OTPs for this user
+    await db.delete(otpVerifications).where(eq(otpVerifications.userId, userId));
+    
+    // Create new OTP
+    await db.insert(otpVerifications).values({
+      userId,
+      otp,
+      type,
+      expiresAt
+    });
+    
+    return otp;
+  }
+
+  async verifyOtp(userId: number, otp: string): Promise<boolean> {
+    // Delete expired OTPs first
+    await this.deleteExpiredOtps();
+    
+    // Check if valid OTP exists
+    const [verification] = await db
+      .select()
+      .from(otpVerifications)
+      .where(and(
+        eq(otpVerifications.userId, userId),
+        eq(otpVerifications.otp, otp)
+      ));
+    
+    if (verification) {
+      // Delete the OTP after successful verification
+      await db.delete(otpVerifications).where(eq(otpVerifications.id, verification.id));
+      
+      // Mark user as verified
+      await this.markUserAsVerified(userId);
+      
+      return true;
+    }
+    
+    return false;
+  }
+
+  async deleteExpiredOtps(): Promise<void> {
+    await db
+      .delete(otpVerifications)
+      .where(lt(otpVerifications.expiresAt, new Date()));
   }
   
   // City methods
