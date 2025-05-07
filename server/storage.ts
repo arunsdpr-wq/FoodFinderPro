@@ -6,7 +6,7 @@ import {
   MenuItem, InsertMenuItem, 
   Order, InsertOrder, OrderItem,
   User, InsertUser,
-  otpVerifications, InsertOtpVerificationSchema
+  otpVerifications, insertOtpVerificationSchema
 } from "@shared/schema";
 
 import session from "express-session";
