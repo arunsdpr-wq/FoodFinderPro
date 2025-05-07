@@ -92,6 +92,13 @@ export default function MainLayout({ children }: MainLayoutProps) {
                       </DropdownMenuItem>
                     </a>
                   </Link>
+                  <Link href="/admin">
+                    <a>
+                      <DropdownMenuItem>
+                        <span>Admin Panel</span>
+                      </DropdownMenuItem>
+                    </a>
+                  </Link>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
                     <span>Log out</span>

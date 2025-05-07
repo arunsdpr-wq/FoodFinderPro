@@ -10,6 +10,7 @@ import Checkout from "@/pages/checkout";
 import OrderConfirmation from "@/pages/order-confirmation";
 import AuthPage from "@/pages/auth-page";
 import ProfilePage from "@/pages/profile-page";
+import AdminPanel from "@/pages/admin-panel";
 import MainLayout from "@/layouts/main-layout";
 import { CartProvider } from "@/context/CartContext";
 import { AuthProvider } from "@/hooks/use-auth";
@@ -29,6 +30,9 @@ function Router() {
       </ProtectedRoute>
       <ProtectedRoute path="/order-confirmation/:orderNumber">
         <OrderConfirmation />
+      </ProtectedRoute>
+      <ProtectedRoute path="/admin">
+        <AdminPanel />
       </ProtectedRoute>
       <Route component={NotFound} />
     </Switch>

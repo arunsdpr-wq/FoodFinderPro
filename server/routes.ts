@@ -9,7 +9,32 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication
   setupAuth(app);
   
+  // Admin middleware - check if user has admin rights
+  const isAdmin = (req: Request, res: Response, next: NextFunction) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    // In a real app, check if user has admin role
+    // For demo, we'll consider all authenticated users as admins
+    // TODO: Implement proper role-based access control
+    next();
+  };
+  
   // API Routes - prefix with /api
+  
+  // Admin Routes
+  
+  // Get all orders for admin dashboard
+  app.get("/api/admin/orders", isAdmin, async (req: Request, res: Response) => {
+    try {
+      const orders = await storage.getOrders();
+      res.json(orders);
+    } catch (error) {
+      console.error("Error fetching all orders:", error);
+      res.status(500).json({ message: "Failed to fetch orders" });
+    }
+  });
   
   // Get orders for the current user
   app.get("/api/my-orders", (req: Request, res: Response) => {
