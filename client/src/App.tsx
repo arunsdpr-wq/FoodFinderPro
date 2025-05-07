@@ -8,16 +8,28 @@ import Home from "@/pages/home";
 import Menu from "@/pages/menu";
 import Checkout from "@/pages/checkout";
 import OrderConfirmation from "@/pages/order-confirmation";
+import AuthPage from "@/pages/auth-page";
+import ProfilePage from "@/pages/profile-page";
 import MainLayout from "@/layouts/main-layout";
 import { CartProvider } from "@/context/CartContext";
+import { AuthProvider } from "@/hooks/use-auth";
+import { ProtectedRoute } from "@/components/protected-route";
 
 function Router() {
   return (
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/menu/:restaurantValue" component={Menu} />
-      <Route path="/checkout" component={Checkout} />
-      <Route path="/order-confirmation/:orderNumber" component={OrderConfirmation} />
+      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/checkout">
+        <Checkout />
+      </ProtectedRoute>
+      <ProtectedRoute path="/profile">
+        <ProfilePage />
+      </ProtectedRoute>
+      <ProtectedRoute path="/order-confirmation/:orderNumber">
+        <OrderConfirmation />
+      </ProtectedRoute>
       <Route component={NotFound} />
     </Switch>
   );
@@ -26,14 +38,16 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <CartProvider>
-        <TooltipProvider>
-          <Toaster />
-          <MainLayout>
-            <Router />
-          </MainLayout>
-        </TooltipProvider>
-      </CartProvider>
+      <AuthProvider>
+        <CartProvider>
+          <TooltipProvider>
+            <Toaster />
+            <MainLayout>
+              <Router />
+            </MainLayout>
+          </TooltipProvider>
+        </CartProvider>
+      </AuthProvider>
     </QueryClientProvider>
   );
 }

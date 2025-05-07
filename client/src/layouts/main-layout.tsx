@@ -1,7 +1,17 @@
 import { ReactNode } from "react";
 import { Link } from "wouter";
 import { useCart } from "@/hooks/use-cart";
-import { RiRestaurant2Fill, RiMenu2Line, RiShoppingCart2Line } from "react-icons/ri";
+import { useAuth } from "@/hooks/use-auth";
+import { RiRestaurant2Fill, RiMenu2Line, RiShoppingCart2Line, RiUserLine } from "react-icons/ri";
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 interface MainLayoutProps {
   children: ReactNode;
@@ -9,6 +19,7 @@ interface MainLayoutProps {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   const { cartItems } = useCart();
+  const { user, logoutMutation } = useAuth();
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   return (
@@ -29,8 +40,11 @@ export default function MainLayout({ children }: MainLayoutProps) {
             <Link href="/">
               <a className="text-neutral-500 hover:text-primary transition-colors">Home</a>
             </Link>
-            <a href="#" className="text-neutral-500 hover:text-primary transition-colors">Orders</a>
-            <a href="#" className="text-neutral-500 hover:text-primary transition-colors">Profile</a>
+            {user && (
+              <Link href="/profile">
+                <a className="text-neutral-500 hover:text-primary transition-colors">My Orders</a>
+              </Link>
+            )}
           </div>
           
           <div className="flex items-center space-x-3">
@@ -44,6 +58,57 @@ export default function MainLayout({ children }: MainLayoutProps) {
                 )}
               </a>
             </Link>
+            
+            {user ? (
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" className="relative h-8 w-8 rounded-full">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback>
+                        {user.fullName 
+                          ? user.fullName.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2)
+                          : user.username.substring(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent className="w-56" align="end" forceMount>
+                  <div className="flex flex-col space-y-1 p-2">
+                    <p className="text-sm font-medium">{user.fullName || user.username}</p>
+                    <p className="text-xs text-muted-foreground">{user.username}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <Link href="/profile">
+                    <a>
+                      <DropdownMenuItem>
+                        <span>My Profile</span>
+                      </DropdownMenuItem>
+                    </a>
+                  </Link>
+                  <Link href="/profile">
+                    <a>
+                      <DropdownMenuItem>
+                        <span>My Orders</span>
+                      </DropdownMenuItem>
+                    </a>
+                  </Link>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => logoutMutation.mutate()}>
+                    <span>Log out</span>
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            ) : (
+              <Link href="/auth">
+                <a>
+                  <Button variant="ghost" size="sm" className="gap-1">
+                    <RiUserLine className="h-4 w-4" />
+                    <span>Login</span>
+                  </Button>
+                </a>
+              </Link>
+            )}
+            
             <button className="md:hidden text-neutral-500 hover:text-primary transition-colors">
               <RiMenu2Line className="text-2xl" />
             </button>
