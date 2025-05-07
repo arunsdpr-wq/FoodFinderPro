@@ -5,7 +5,7 @@ import { PlusIcon } from "lucide-react";
 import { useCart } from "../context/CartContext";
 import { Cart } from "./Cart";
 import { useState, useEffect } from "react";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile as useMobile } from "@/hooks/use-mobile";
 
 interface MenuDisplayProps {
   restaurantId: string;
@@ -17,14 +17,36 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
   const { addToCart } = useCart();
   const isMobile = useMobile();
 
+  // Define types for restaurant and menu items
+  interface RestaurantDetails {
+    id: number;
+    name: string;
+    description: string;
+    imageUrl: string;
+    locationId: number;
+    value: string;
+    deliveryTime?: string;
+  }
+  
+  interface MenuItem {
+    id: number;
+    name: string;
+    description: string;
+    price: number;
+    imageUrl: string;
+    restaurantId: number;
+    category: string;
+    isPopular: boolean;
+  }
+
   // Restaurant details query
-  const { data: restaurant, isLoading: restaurantLoading } = useQuery({
-    queryKey: ["/api/restaurants/details", restaurantId],
+  const { data: restaurant, isLoading: restaurantLoading } = useQuery<RestaurantDetails>({
+    queryKey: [`/api/restaurants/${restaurantId}`],
   });
 
   // Menu items query
-  const { data: menuItems, isLoading: menuLoading } = useQuery({
-    queryKey: ["/api/menu", restaurantId],
+  const { data: menuItems, isLoading: menuLoading } = useQuery<MenuItem[]>({
+    queryKey: [`/api/restaurants/${restaurantId}/menu`],
   });
 
   // Close mobile cart when switching to desktop

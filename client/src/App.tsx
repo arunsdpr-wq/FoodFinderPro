@@ -9,6 +9,7 @@ import Menu from "@/pages/menu";
 import Checkout from "@/pages/checkout";
 import OrderConfirmation from "@/pages/order-confirmation";
 import MainLayout from "@/layouts/main-layout";
+import { CartProvider } from "@/context/CartContext";
 
 function Router() {
   return (
@@ -25,12 +26,14 @@ function Router() {
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <Toaster />
-        <MainLayout>
-          <Router />
-        </MainLayout>
-      </TooltipProvider>
+      <CartProvider>
+        <TooltipProvider>
+          <Toaster />
+          <MainLayout>
+            <Router />
+          </MainLayout>
+        </TooltipProvider>
+      </CartProvider>
     </QueryClientProvider>
   );
 }
