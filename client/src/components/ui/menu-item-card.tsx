@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { MenuItem } from "@shared/schema";
+import type { MenuItem } from "@shared/schema";
 import { useCart } from "@/hooks/use-cart";
 import { RiAddLine, RiCheckLine } from "react-icons/ri";
 import { Card, CardContent } from "@/components/ui/card";
@@ -14,12 +14,15 @@ export function MenuItemCard({ menuItem }: MenuItemCardProps) {
   const [isAdded, setIsAdded] = useState(false);
   
   const handleAddToCart = () => {
+    // Convert price to number using Number constructor
+    const price = Number(menuItem.price);
+    
     addToCart({
       id: menuItem.id,
       name: menuItem.name,
-      price: menuItem.price,
+      price: price,
       quantity: 1,
-      imageUrl: menuItem.imageUrl
+      imageUrl: menuItem.imageUrl || undefined
     });
     
     // Show feedback
@@ -53,7 +56,7 @@ export function MenuItemCard({ menuItem }: MenuItemCardProps) {
       <CardContent className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-medium text-lg">{menuItem.name}</h3>
-          <span className="font-bold">${menuItem.price.toFixed(2)}</span>
+          <span className="font-bold">${Number(menuItem.price).toFixed(2)}</span>
         </div>
         <p className="text-neutral-500 text-sm mb-3">{menuItem.description}</p>
         <button 
