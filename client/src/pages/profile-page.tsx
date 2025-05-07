@@ -1,200 +1,251 @@
-import { useAuth } from "@/hooks/use-auth";
+import React, { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { getQueryFn } from "@/lib/queryClient";
-import { Order } from "@shared/schema";
-import { Loader2, Clock, Package, ListOrdered, User as UserIcon, Phone, MapPin, LogOut } from "lucide-react";
-import { format } from "date-fns";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { useAuth } from "@/hooks/use-auth";
+import { Review } from "@shared/schema";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Separator } from "@/components/ui/separator";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import { DisplayRating } from "@/components/ui/Rating";
+import { Button } from "@/components/ui/button";
+import { Pencil, Trash2 } from "lucide-react";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { ReviewForm } from "@/components/ui/ReviewForm";
+import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 export default function ProfilePage() {
-  const { user, isLoading: authLoading, logoutMutation } = useAuth();
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [editingReview, setEditingReview] = useState<Review | null>(null);
+  const [dialogOpen, setDialogOpen] = React.useState(false);
 
-  const {
-    data: orders,
-    isLoading: ordersLoading,
-    error,
-  } = useQuery<Order[], Error>({
-    queryKey: ["/api/my-orders"],
-    queryFn: getQueryFn({ on401: "throw" }),
-    enabled: !!user, // Only fetch if user is logged in
+  // Fetch user reviews
+  const { 
+    data: reviews, 
+    isLoading, 
+    error 
+  } = useQuery<Review[]>({ 
+    queryKey: ['/api/my-reviews'],
+    queryFn: async () => {
+      const response = await fetch('/api/my-reviews');
+      if (!response.ok) {
+        throw new Error('Failed to fetch reviews');
+      }
+      return response.json();
+    },
+    enabled: !!user // Only fetch if user is logged in
   });
 
-  const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
-      case "confirmed":
-        return "bg-blue-500";
-      case "preparing":
-        return "bg-yellow-500";
-      case "out-for-delivery":
-        return "bg-purple-500";
-      case "delivered":
-        return "bg-green-500";
-      case "cancelled":
-        return "bg-red-500";
-      default:
-        return "bg-gray-500";
+  // Handle review deletion
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm("Are you sure you want to delete this review?")) return;
+
+    try {
+      await apiRequest("DELETE", `/api/reviews/${reviewId}`);
+      
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/my-reviews'] });
+      
+      toast({
+        title: "Review deleted",
+        description: "Your review has been deleted successfully."
+      });
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to delete the review. Please try again.",
+        variant: "destructive"
+      });
     }
   };
 
-  const formatOrderStatus = (status: string) => {
-    return status.split("-").map(word => 
-      word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(" ");
+  // Handle opening the edit dialog
+  const handleEditReview = (review: Review) => {
+    setEditingReview(review);
+    setDialogOpen(true);
   };
 
-  const handleLogout = () => {
-    logoutMutation.mutate();
+  // Format date for display
+  const formatDate = (date: Date | null) => {
+    if (!date) return "Unknown date";
+    return format(new Date(date), 'MMM d, yyyy');
   };
 
-  if (authLoading) {
+  // Loading state
+  if (isLoading) {
     return (
-      <div className="flex h-[calc(100vh-80px)] items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-8">My Profile</h1>
+        <Tabs defaultValue="reviews">
+          <TabsList>
+            <TabsTrigger value="profile">Profile Details</TabsTrigger>
+            <TabsTrigger value="reviews">My Reviews</TabsTrigger>
+            <TabsTrigger value="orders">Order History</TabsTrigger>
+          </TabsList>
+          <TabsContent value="reviews" className="mt-6">
+            <div className="space-y-4">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Card key={i} className="w-full">
+                  <CardHeader>
+                    <Skeleton className="h-4 w-1/3 mb-2" />
+                    <Skeleton className="h-3 w-24" />
+                  </CardHeader>
+                  <CardContent>
+                    <Skeleton className="h-3 w-full mb-2" />
+                    <Skeleton className="h-3 w-full mb-2" />
+                    <Skeleton className="h-3 w-2/3" />
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     );
   }
 
-  if (!user) {
-    return null; // Should be handled by ProtectedRoute
+  // Error state
+  if (error) {
+    return (
+      <div className="max-w-4xl mx-auto p-6">
+        <h1 className="text-2xl font-bold mb-8">My Profile</h1>
+        <div className="text-red-500 p-4 border border-red-200 rounded-md bg-red-50">
+          Error loading your profile data. Please try again later.
+        </div>
+      </div>
+    );
   }
 
-  const userInitials = user.fullName 
-    ? user.fullName.split(" ").map(n => n[0]).join("").toUpperCase() 
-    : user.username.substring(0, 2).toUpperCase();
-
   return (
-    <div className="container py-8">
-      <div className="grid gap-8 md:grid-cols-[300px_1fr]">
-        {/* User Profile Card */}
-        <Card>
-          <CardHeader className="text-center">
-            <div className="flex justify-center mb-4">
-              <Avatar className="h-24 w-24">
-                <AvatarFallback className="text-xl">{userInitials}</AvatarFallback>
-              </Avatar>
-            </div>
-            <CardTitle className="text-xl">{user.fullName || user.username}</CardTitle>
-            <CardDescription>
-              Member since {user.createdAt ? format(new Date(user.createdAt), "MMMM yyyy") : "N/A"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex items-center">
-                <UserIcon className="h-4 w-4 mr-2 opacity-70" />
-                <span className="text-sm">{user.username}</span>
+    <div className="max-w-4xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-8">My Profile</h1>
+      
+      <Tabs defaultValue="reviews">
+        <TabsList>
+          <TabsTrigger value="profile">Profile Details</TabsTrigger>
+          <TabsTrigger value="reviews">My Reviews</TabsTrigger>
+          <TabsTrigger value="orders">Order History</TabsTrigger>
+        </TabsList>
+        
+        <TabsContent value="profile" className="mt-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Personal Information</CardTitle>
+              <CardDescription>View and update your profile details</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-4">
+                <div>
+                  <p className="font-medium">Username</p>
+                  <p className="text-gray-600">{user?.username}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Email</p>
+                  <p className="text-gray-600">{user?.email || "No email added"}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Phone</p>
+                  <p className="text-gray-600">{user?.phoneNumber || "No phone number added"}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Full Name</p>
+                  <p className="text-gray-600">{user?.fullName || "No name added"}</p>
+                </div>
+                <div>
+                  <p className="font-medium">Address</p>
+                  <p className="text-gray-600">{user?.address || "No address added"}</p>
+                </div>
               </div>
-              {user.phoneNumber && (
-                <div className="flex items-center">
-                  <Phone className="h-4 w-4 mr-2 opacity-70" />
-                  <span className="text-sm">{user.phoneNumber}</span>
-                </div>
-              )}
-              {user.address && (
-                <div className="flex items-center">
-                  <MapPin className="h-4 w-4 mr-2 opacity-70" />
-                  <span className="text-sm">{user.address}</span>
-                </div>
-              )}
-              <Separator className="my-4" />
-              <Button 
-                variant="outline" 
-                className="w-full flex items-center justify-center" 
-                onClick={handleLogout}
-                disabled={logoutMutation.isPending}
-              >
-                {logoutMutation.isPending ? (
-                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                ) : (
-                  <LogOut className="h-4 w-4 mr-2" />
-                )}
-                Sign Out
-              </Button>
+            </CardContent>
+            <CardFooter>
+              <Button>Edit Profile</Button>
+            </CardFooter>
+          </Card>
+        </TabsContent>
+        
+        <TabsContent value="reviews" className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">My Reviews</h2>
+          
+          {reviews && reviews.length > 0 ? (
+            <div className="space-y-4">
+              {reviews.map((review) => (
+                <Card key={review.id} className="w-full">
+                  <CardHeader className="pb-2">
+                    <div className="flex justify-between">
+                      <CardTitle className="text-lg">{review.title}</CardTitle>
+                      <div className="flex space-x-2">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditReview(review)}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteReview(review.id)}
+                        >
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                    <DisplayRating value={review.rating} />
+                  </CardHeader>
+                  <CardContent>
+                    <p className="text-gray-700">{review.comment}</p>
+                  </CardContent>
+                  <CardFooter className="pt-0 flex justify-between">
+                    <CardDescription>
+                      Posted on {formatDate(review.createdAt)}
+                      {review.updatedAt && review.updatedAt !== review.createdAt && 
+                        ` (Edited on ${formatDate(review.updatedAt)})`}
+                    </CardDescription>
+                    <CardDescription>
+                      Restaurant: {review.restaurantId}
+                    </CardDescription>
+                  </CardFooter>
+                </Card>
+              ))}
             </div>
-          </CardContent>
-        </Card>
-
-        {/* Order History */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-2xl">My Account</CardTitle>
-            <CardDescription>View your order history and manage your account</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Tabs defaultValue="orders">
-              <TabsList className="mb-4">
-                <TabsTrigger value="orders">
-                  <ListOrdered className="h-4 w-4 mr-2" />
-                  Order History
-                </TabsTrigger>
-              </TabsList>
-              <TabsContent value="orders">
-                {ordersLoading ? (
-                  <div className="flex justify-center py-8">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : error ? (
-                  <div className="text-center py-8 text-red-500">
-                    Failed to load orders. Please try again.
-                  </div>
-                ) : orders && orders.length > 0 ? (
-                  <div className="space-y-4">
-                    {orders.map((order) => (
-                      <Card key={order.id}>
-                        <CardContent className="p-4">
-                          <div className="flex flex-col md:flex-row md:items-center justify-between mb-4">
-                            <div>
-                              <p className="font-medium">Order #{order.orderNumber}</p>
-                              <div className="flex items-center text-sm text-muted-foreground">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {order.createdAt ? format(new Date(order.createdAt), "PPp") : "N/A"}
-                              </div>
-                            </div>
-                            <Badge className={`${getStatusColor(order.status)} mt-2 md:mt-0`}>
-                              {formatOrderStatus(order.status)}
-                            </Badge>
-                          </div>
-                          <Separator className="my-2" />
-                          <div className="mt-2">
-                            <div className="text-sm text-muted-foreground mb-2">Items:</div>
-                            {order.orderItems.map((item, idx) => (
-                              <div key={idx} className="flex justify-between items-center py-1">
-                                <div className="flex items-center">
-                                  <Package className="h-3 w-3 mr-2 text-muted-foreground" />
-                                  <span>
-                                    {item.name} × {item.quantity}
-                                  </span>
-                                </div>
-                                <span className="font-medium">${(Number(item.price) * item.quantity).toFixed(2)}</span>
-                              </div>
-                            ))}
-                            <Separator className="my-2" />
-                            <div className="flex justify-between font-medium">
-                              <span>Total</span>
-                              <span>${Number(order.totalAmount).toFixed(2)}</span>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 text-muted-foreground">
-                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                    <p>You don't have any orders yet</p>
-                    <Button className="mt-4" variant="outline">Start Ordering</Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </CardContent>
-        </Card>
-      </div>
+          ) : (
+            <div className="text-center py-12 text-gray-500 border rounded-lg">
+              <p>You haven't written any reviews yet.</p>
+              <p className="text-sm mt-2">Visit a restaurant page to share your experience!</p>
+            </div>
+          )}
+        </TabsContent>
+        
+        <TabsContent value="orders" className="mt-6">
+          <h2 className="text-xl font-semibold mb-4">Order History</h2>
+          <div className="text-center py-12 text-gray-500 border rounded-lg">
+            <p>Your order history will be displayed here.</p>
+          </div>
+        </TabsContent>
+      </Tabs>
+      
+      {/* Edit Review Dialog */}
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        {editingReview && (
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Edit Your Review</DialogTitle>
+            </DialogHeader>
+            <ReviewForm
+              restaurantValue={editingReview.restaurantId.toString()}
+              isEditing={true}
+              reviewId={editingReview.id}
+              defaultValues={{
+                title: editingReview.title || "",
+                rating: editingReview.rating,
+                comment: editingReview.comment || ""
+              }}
+              onSuccess={() => setDialogOpen(false)}
+            />
+          </DialogContent>
+        )}
+      </Dialog>
     </div>
   );
 }

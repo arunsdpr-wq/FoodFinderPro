@@ -6,6 +6,8 @@ import { useCart } from "../context/CartContext";
 import { Cart } from "./Cart";
 import { useState, useEffect } from "react";
 import { useIsMobile as useMobile } from "@/hooks/use-mobile";
+import { ReviewSummary } from "@/components/ui/ReviewSummary";
+import { ReviewList } from "@/components/ui/ReviewList";
 
 interface MenuDisplayProps {
   restaurantId: string;
@@ -16,6 +18,11 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
   const [showMobileCart, setShowMobileCart] = useState(false);
   const { addToCart } = useCart();
   const isMobile = useMobile();
+  
+  // Fetch reviews to get the count
+  const { data: reviews } = useQuery<any[]>({
+    queryKey: [`/api/restaurants/${restaurantId}/reviews`],
+  });
 
   // Define types for restaurant and menu items
   interface RestaurantDetails {
@@ -86,6 +93,21 @@ export function MenuDisplay({ restaurantId, onCheckout }: MenuDisplayProps) {
             </CardContent>
           </Card>
 
+          {/* Reviews Section */}
+          <Card className="mb-6">
+            <CardContent className="pt-6">
+              <ReviewSummary 
+                restaurantValue={restaurantId} 
+                reviewsCount={reviews?.length || 0}
+              />
+              
+              <div className="mt-8">
+                <ReviewList restaurantValue={restaurantId} />
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Menu Section */}
           <Card>
             <CardContent className="pt-6">
               <h3 className="text-xl font-semibold mb-6">Menu</h3>
