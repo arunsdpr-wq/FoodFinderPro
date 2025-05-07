@@ -80,6 +80,30 @@ export const insertMenuItemSchema = createInsertSchema(menuItems).pick({
 export type InsertMenuItem = z.infer<typeof insertMenuItemSchema>;
 export type MenuItem = typeof menuItems.$inferSelect;
 
+// Users schema with extended profile information
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull().unique(),
+  password: text("password").notNull(),
+  email: text("email").notNull().unique(),
+  fullName: text("full_name"),
+  phoneNumber: text("phone_number"),
+  address: text("address"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
+  password: true,
+  email: true,
+  fullName: true,
+  phoneNumber: true,
+  address: true,
+});
+
+export type InsertUser = z.infer<typeof insertUserSchema>;
+export type User = typeof users.$inferSelect;
+
 // Order schema
 export const orders = pgTable("orders", {
   id: serial("id").primaryKey(),
@@ -92,7 +116,8 @@ export const orders = pgTable("orders", {
   totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
   status: text("status").notNull().default("confirmed"),
   paymentMethod: text("payment_method").notNull(),
-  restaurantId: integer("restaurant_id").notNull(),
+  restaurantId: integer("restaurant_id").notNull().references(() => restaurants.id),
+  userId: integer("user_id").references(() => users.id), // Can be null for guest checkout
   orderItems: json("order_items").$type<OrderItem[]>().notNull(),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -113,23 +138,9 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
   totalAmount: true,
   paymentMethod: true,
   restaurantId: true,
+  userId: true,
   orderItems: true,
 });
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
-
-// Users schema (keeping existing schema)
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-});
-
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-});
-
-export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
