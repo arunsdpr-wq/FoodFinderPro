@@ -85,220 +85,88 @@ export class MemStorage implements IStorage {
     this.initializeData();
   }
 
-  private initializeData() {
-    // Cities
-    const cityData: InsertCity[] = [
-      { name: "New York", value: "new-york" },
-      { name: "Los Angeles", value: "los-angeles" },
-      { name: "Chicago", value: "chicago" },
-      { name: "Houston", value: "houston" }
-    ];
+  private async initializeData() {
+    try {
+      // Cities
+      const cityData: InsertCity[] = [
+        { name: "New York", value: "new-york" },
+        { name: "Los Angeles", value: "los-angeles" },
+        { name: "Chicago", value: "chicago" },
+        { name: "Houston", value: "houston" }
+      ];
     
-    cityData.forEach(city => this.createCity(city));
-
-    // Locations
-    const locationData: { data: InsertLocation, cityValue: string }[] = [
-      { data: { name: "Manhattan", value: "manhattan", cityId: 0 }, cityValue: "new-york" },
-      { data: { name: "Brooklyn", value: "brooklyn", cityId: 0 }, cityValue: "new-york" },
-      { data: { name: "Queens", value: "queens", cityId: 0 }, cityValue: "new-york" },
-      { data: { name: "Downtown LA", value: "downtown", cityId: 0 }, cityValue: "los-angeles" },
-      { data: { name: "Hollywood", value: "hollywood", cityId: 0 }, cityValue: "los-angeles" },
-      { data: { name: "Santa Monica", value: "santa-monica", cityId: 0 }, cityValue: "los-angeles" },
-      { data: { name: "The Loop", value: "loop", cityId: 0 }, cityValue: "chicago" },
-      { data: { name: "Lincoln Park", value: "lincoln-park", cityId: 0 }, cityValue: "chicago" },
-      { data: { name: "Wicker Park", value: "wicker-park", cityId: 0 }, cityValue: "chicago" },
-      { data: { name: "Downtown Houston", value: "downtown-houston", cityId: 0 }, cityValue: "houston" },
-      { data: { name: "Midtown", value: "midtown", cityId: 0 }, cityValue: "houston" },
-      { data: { name: "Rice Village", value: "rice-village", cityId: 0 }, cityValue: "houston" }
-    ];
-    
-    locationData.forEach(async location => {
-      const city = await this.getCityByValue(location.cityValue);
-      if (city) {
-        location.data.cityId = city.id;
-        await this.createLocation(location.data);
+      // Create cities one by one
+      for (const city of cityData) {
+        await this.createCity(city);
       }
-    });
 
-    // Restaurants
-    const restaurantData: { data: InsertRestaurant, locationValue: string }[] = [
-      // Restaurant A for each location
-      { 
-        data: { 
-          name: "Restaurant-A", 
-          value: "restaurant-a-manhattan", 
-          description: "Premier dining experience with a diverse menu",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "manhattan" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-A", 
-          value: "restaurant-a-brooklyn", 
-          description: "Premier dining experience with a diverse menu",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "brooklyn" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-A", 
-          value: "restaurant-a-queens", 
-          description: "Premier dining experience with a diverse menu",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "queens" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-A", 
-          value: "restaurant-a-downtown", 
-          description: "Premier dining experience with a diverse menu",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "downtown" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-A", 
-          value: "restaurant-a-hollywood", 
-          description: "Premier dining experience with a diverse menu",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "hollywood" 
-      },
+      // Locations
+      const locationData: { data: InsertLocation, cityValue: string }[] = [
+        { data: { name: "Manhattan", value: "manhattan", cityId: 0 }, cityValue: "new-york" },
+        { data: { name: "Brooklyn", value: "brooklyn", cityId: 0 }, cityValue: "new-york" },
+        { data: { name: "Queens", value: "queens", cityId: 0 }, cityValue: "new-york" },
+        { data: { name: "Downtown LA", value: "downtown", cityId: 0 }, cityValue: "los-angeles" },
+        { data: { name: "Hollywood", value: "hollywood", cityId: 0 }, cityValue: "los-angeles" },
+        { data: { name: "Santa Monica", value: "santa-monica", cityId: 0 }, cityValue: "los-angeles" },
+        { data: { name: "The Loop", value: "loop", cityId: 0 }, cityValue: "chicago" },
+        { data: { name: "Lincoln Park", value: "lincoln-park", cityId: 0 }, cityValue: "chicago" },
+        { data: { name: "Wicker Park", value: "wicker-park", cityId: 0 }, cityValue: "chicago" },
+        { data: { name: "Downtown Houston", value: "downtown-houston", cityId: 0 }, cityValue: "houston" },
+        { data: { name: "Midtown", value: "midtown", cityId: 0 }, cityValue: "houston" },
+        { data: { name: "Rice Village", value: "rice-village", cityId: 0 }, cityValue: "houston" }
+      ];
+
+      // Create locations one by one
+      for (const location of locationData) {
+        const city = await this.getCityByValue(location.cityValue);
+        if (city) {
+          location.data.cityId = city.id;
+          await this.createLocation(location.data);
+        }
+      }
+
+      // Restaurants - Restaurant A, B, C for each location
+      const locations = await this.getLocations();
       
-      // Restaurant B for each location
-      { 
-        data: { 
-          name: "Restaurant-B", 
-          value: "restaurant-b-manhattan", 
+      for (const location of locations) {
+        // Restaurant A
+        await this.createRestaurant({
+          name: "Restaurant-A",
+          value: `restaurant-a-${location.value}`,
+          description: "Premier dining experience with a diverse menu",
+          locationId: location.id,
+          imageUrl: "https://images.unsplash.com/photo-1555396273-367ea4eb4db5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400"
+        });
+        
+        // Restaurant B
+        await this.createRestaurant({
+          name: "Restaurant-B",
+          value: `restaurant-b-${location.value}`,
           description: "Casual dining with specialty dishes and drinks",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "manhattan" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-B", 
-          value: "restaurant-b-brooklyn", 
-          description: "Casual dining with specialty dishes and drinks",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "brooklyn" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-B", 
-          value: "restaurant-b-queens", 
-          description: "Casual dining with specialty dishes and drinks",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "queens" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-B", 
-          value: "restaurant-b-downtown", 
-          description: "Casual dining with specialty dishes and drinks",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "downtown" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-B", 
-          value: "restaurant-b-hollywood", 
-          description: "Casual dining with specialty dishes and drinks",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "hollywood" 
-      },
-      
-      // Restaurant C for each location
-      { 
-        data: { 
-          name: "Restaurant-C", 
-          value: "restaurant-c-manhattan", 
+          locationId: location.id,
+          imageUrl: "https://images.unsplash.com/photo-1579871494447-9811cf80d66c?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400"
+        });
+        
+        // Restaurant C
+        await this.createRestaurant({
+          name: "Restaurant-C",
+          value: `restaurant-c-${location.value}`,
           description: "Fast and delicious food options for everyone",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "manhattan" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-C", 
-          value: "restaurant-c-brooklyn", 
-          description: "Fast and delicious food options for everyone",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "brooklyn" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-C", 
-          value: "restaurant-c-queens", 
-          description: "Fast and delicious food options for everyone",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "queens" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-C", 
-          value: "restaurant-c-downtown", 
-          description: "Fast and delicious food options for everyone",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "downtown" 
-      },
-      { 
-        data: { 
-          name: "Restaurant-C", 
-          value: "restaurant-c-hollywood", 
-          description: "Fast and delicious food options for everyone",
-          locationId: 0,
-          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400" 
-        }, 
-        locationValue: "hollywood" 
+          locationId: location.id,
+          imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400"
+        });
       }
-    ];
-    
-    restaurantData.forEach(async restaurant => {
-      const location = await this.getLocationByValue(restaurant.locationValue);
-      if (location) {
-        restaurant.data.locationId = location.id;
-        await this.createRestaurant(restaurant.data);
-      }
-    });
 
-    // Menu Items for the restaurants
-    setTimeout(async () => {
-      // Menu items for Restaurant-A in Manhattan
-      const restaurantA = await this.getRestaurantByValue("restaurant-a-manhattan");
-      if (restaurantA) {
-        const menuItemsA: InsertMenuItem[] = [
+      // Add menu items for the first location's restaurants
+      const manhattanRestaurantA = await this.getRestaurantByValue("restaurant-a-manhattan");
+      if (manhattanRestaurantA) {
+        const menuItemsA = [
           {
             name: "Special Steak",
             description: "Premium cut steak cooked to perfection with signature seasoning.",
             price: "29.99",
             imageUrl: "https://images.unsplash.com/photo-1504973960431-1c467e159aa4?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantA.id,
+            restaurantId: manhattanRestaurantA.id,
             category: "Main Courses",
             isPopular: true
           },
@@ -307,7 +175,7 @@ export class MemStorage implements IStorage {
             description: "Fresh assortment of seafood including shrimp, crab, and fish.",
             price: "32.50",
             imageUrl: "https://images.unsplash.com/photo-1534709867132-ea6fe01f9a8a?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantA.id,
+            restaurantId: manhattanRestaurantA.id,
             category: "Main Courses",
             isPopular: true
           },
@@ -316,25 +184,26 @@ export class MemStorage implements IStorage {
             description: "Crispy fries drizzled with truffle oil and parmesan.",
             price: "10.99",
             imageUrl: "https://images.unsplash.com/photo-1585109649139-366815a0d713?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantA.id,
+            restaurantId: manhattanRestaurantA.id,
             category: "Appetizers",
             isPopular: false
           }
         ];
 
-        menuItemsA.forEach(item => this.createMenuItem(item));
+        for (const item of menuItemsA) {
+          await this.createMenuItem(item);
+        }
       }
 
-      // Menu items for Restaurant-B in Manhattan
-      const restaurantB = await this.getRestaurantByValue("restaurant-b-manhattan");
-      if (restaurantB) {
-        const menuItemsB: InsertMenuItem[] = [
+      const manhattanRestaurantB = await this.getRestaurantByValue("restaurant-b-manhattan");
+      if (manhattanRestaurantB) {
+        const menuItemsB = [
           {
             name: "Gourmet Burger",
             description: "Premium beef patty with artisan cheese and special sauce.",
             price: "15.99",
             imageUrl: "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantB.id,
+            restaurantId: manhattanRestaurantB.id,
             category: "Main Courses",
             isPopular: true
           },
@@ -343,7 +212,7 @@ export class MemStorage implements IStorage {
             description: "Crispy wings with choice of sauce: buffalo, BBQ, or honey garlic.",
             price: "13.50",
             imageUrl: "https://images.unsplash.com/photo-1601002277582-57933a3b2743?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantB.id,
+            restaurantId: manhattanRestaurantB.id,
             category: "Appetizers",
             isPopular: true
           },
@@ -352,25 +221,26 @@ export class MemStorage implements IStorage {
             description: "Selection of locally brewed craft beers.",
             price: "7.99",
             imageUrl: "https://images.unsplash.com/photo-1555658636-6e4a36218be7?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantB.id,
+            restaurantId: manhattanRestaurantB.id,
             category: "Beverages",
             isPopular: false
           }
         ];
 
-        menuItemsB.forEach(item => this.createMenuItem(item));
+        for (const item of menuItemsB) {
+          await this.createMenuItem(item);
+        }
       }
 
-      // Menu items for Restaurant-C in Manhattan
-      const restaurantC = await this.getRestaurantByValue("restaurant-c-manhattan");
-      if (restaurantC) {
-        const menuItemsC: InsertMenuItem[] = [
+      const manhattanRestaurantC = await this.getRestaurantByValue("restaurant-c-manhattan");
+      if (manhattanRestaurantC) {
+        const menuItemsC = [
           {
             name: "Quick Meal Combo",
             description: "Burger, fries and soft drink combo for a quick meal.",
             price: "9.99",
             imageUrl: "https://images.unsplash.com/photo-1610614991969-ceeb293e7ff5?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantC.id,
+            restaurantId: manhattanRestaurantC.id,
             category: "Combos",
             isPopular: true
           },
@@ -379,7 +249,7 @@ export class MemStorage implements IStorage {
             description: "Fresh salad with grilled chicken, avocado, and light dressing.",
             price: "8.50",
             imageUrl: "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantC.id,
+            restaurantId: manhattanRestaurantC.id,
             category: "Healthy Options",
             isPopular: true
           },
@@ -388,50 +258,21 @@ export class MemStorage implements IStorage {
             description: "Vanilla ice cream with choice of toppings and whipped cream.",
             price: "4.99",
             imageUrl: "https://images.unsplash.com/photo-1563805042-7684c019e1cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=600&h=400",
-            restaurantId: restaurantC.id,
+            restaurantId: manhattanRestaurantC.id,
             category: "Desserts",
             isPopular: false
           }
         ];
 
-        menuItemsC.forEach(item => this.createMenuItem(item));
+        for (const item of menuItemsC) {
+          await this.createMenuItem(item);
+        }
       }
       
-      // Create the same menu items for each restaurant in Brooklyn
-      const restaurantABrooklyn = await this.getRestaurantByValue("restaurant-a-brooklyn");
-      const restaurantBBrooklyn = await this.getRestaurantByValue("restaurant-b-brooklyn");
-      const restaurantCBrooklyn = await this.getRestaurantByValue("restaurant-c-brooklyn");
-      
-      if (restaurantA && restaurantABrooklyn) {
-        const menuItemsA = await this.getMenuItemsByRestaurant(restaurantA.id);
-        menuItemsA.forEach(item => {
-          this.createMenuItem({
-            ...item,
-            restaurantId: restaurantABrooklyn.id
-          });
-        });
-      }
-      
-      if (restaurantB && restaurantBBrooklyn) {
-        const menuItemsB = await this.getMenuItemsByRestaurant(restaurantB.id);
-        menuItemsB.forEach(item => {
-          this.createMenuItem({
-            ...item,
-            restaurantId: restaurantBBrooklyn.id
-          });
-        });
-      }
-      
-      if (restaurantC && restaurantCBrooklyn) {
-        const menuItemsC = await this.getMenuItemsByRestaurant(restaurantC.id);
-        menuItemsC.forEach(item => {
-          this.createMenuItem({
-            ...item,
-            restaurantId: restaurantCBrooklyn.id
-          });
-        });
-      }
-    }, 500);
+      console.log("Data initialization completed successfully");
+    } catch (error) {
+      console.error("Error initializing data:", error);
+    }
   }
 
   // User methods
