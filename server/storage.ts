@@ -6,7 +6,8 @@ import {
   MenuItem, InsertMenuItem, 
   Order, InsertOrder, OrderItem,
   User, InsertUser,
-  otpVerifications, insertOtpVerificationSchema
+  otpVerifications, insertOtpVerificationSchema,
+  Review, InsertReview
 } from "@shared/schema";
 
 import session from "express-session";
@@ -61,6 +62,18 @@ export interface IStorage {
   getOrderByOrderNumber(orderNumber: string): Promise<Order | undefined>;
   createOrder(order: InsertOrder): Promise<Order>;
   updateOrderStatus(id: number, status: string): Promise<Order | undefined>;
+  
+  // Review methods
+  getReviews(): Promise<Review[]>;
+  getReviewsByRestaurant(restaurantId: number): Promise<Review[]>;
+  getReviewsByRestaurantValue(restaurantValue: string): Promise<Review[]>;
+  getReviewsByUser(userId: number): Promise<Review[]>;
+  getReviewById(id: number): Promise<Review | undefined>;
+  createReview(review: InsertReview): Promise<Review>;
+  updateReview(id: number, review: Partial<InsertReview>): Promise<Review | undefined>;
+  deleteReview(id: number): Promise<boolean>;
+  getAverageRatingByRestaurant(restaurantId: number): Promise<number>;
+  getAverageRatingByRestaurantValue(restaurantValue: string): Promise<number>;
 }
 
 export class MemStorage implements IStorage {
@@ -77,6 +90,8 @@ export class MemStorage implements IStorage {
   currentRestaurantId: number;
   currentMenuItemId: number;
   currentOrderId: number;
+  currentReviewId: number;
+  private reviews: Map<number, Review>;
 
   constructor() {
     this.users = new Map();
@@ -85,6 +100,7 @@ export class MemStorage implements IStorage {
     this.restaurants = new Map();
     this.menuItems = new Map();
     this.orders = new Map();
+    this.reviews = new Map();
     
     this.currentUserId = 1;
     this.currentCityId = 1;
@@ -92,6 +108,7 @@ export class MemStorage implements IStorage {
     this.currentRestaurantId = 1;
     this.currentMenuItemId = 1;
     this.currentOrderId = 1;
+    this.currentReviewId = 1;
     
     // Initialize with sample data
     this.initializeData();

@@ -162,3 +162,29 @@ export const insertOrderSchema = createInsertSchema(orders).pick({
 
 export type InsertOrder = z.infer<typeof insertOrderSchema>;
 export type Order = typeof orders.$inferSelect;
+
+// Reviews schema
+export const reviews = pgTable("reviews", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id),
+  restaurantId: integer("restaurant_id").notNull().references(() => restaurants.id),
+  rating: integer("rating").notNull(), // 1-5 stars
+  comment: text("comment"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+  isApproved: boolean("is_approved").default(true),
+  title: text("title"),
+  orderNumber: text("order_number").references(() => orders.orderNumber),
+});
+
+export const insertReviewSchema = createInsertSchema(reviews).pick({
+  userId: true,
+  restaurantId: true,
+  rating: true,
+  comment: true,
+  title: true,
+  orderNumber: true,
+});
+
+export type InsertReview = z.infer<typeof insertReviewSchema>;
+export type Review = typeof reviews.$inferSelect;
