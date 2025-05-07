@@ -89,22 +89,56 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
+      // Validate that either email or phone is provided
+      if (!req.body.email && !req.body.phoneNumber) {
+        return res.status(400).json({ error: "Either email or phone number is required" });
+      }
+
+      // Check if email already exists (if provided)
+      if (req.body.email) {
+        const existingEmail = await storage.getUserByEmail(req.body.email);
+        if (existingEmail) {
+          return res.status(400).json({ error: "Email already in use" });
+        }
+      }
+
+      // Check if phone already exists (if provided)
+      if (req.body.phoneNumber) {
+        const existingPhone = await storage.getUserByPhone(req.body.phoneNumber);
+        if (existingPhone) {
+          return res.status(400).json({ error: "Phone number already in use" });
+        }
+      }
+
       // Hash the password
       const hashedPassword = await hashPassword(req.body.password);
 
-      // Create the user with hashed password
+      // Create the user with hashed password (not verified yet)
       const user = await storage.createUser({
         ...req.body,
         password: hashedPassword,
       });
 
-      // Remove password from response
-      const { password, ...userWithoutPassword } = user;
+      // Generate OTP for verification
+      const verificationType = req.body.email ? 'email' : 'phone';
+      const otp = await storage.createOtp(user.id, verificationType);
 
-      // Log the user in
+      // In a production app, we would send the OTP via email or SMS here
+      console.log(`OTP for user ${user.id}: ${otp}`);
+
+      // Log in the user, although they're not verified yet
       req.login(user, (err) => {
         if (err) return next(err);
-        res.status(201).json(userWithoutPassword);
+        
+        // Remove password from response
+        const { password, ...userWithoutPassword } = user;
+        
+        // Include the OTP in the response for testing purposes (in production, we'd send it via email/SMS)
+        res.status(201).json({ 
+          ...userWithoutPassword, 
+          tempOtp: otp, // Only for demo purposes, remove in production
+          needsVerification: true 
+        });
       });
     } catch (error) {
       next(error);
@@ -137,6 +171,73 @@ export function setupAuth(app: Express) {
     // Remove password from response
     const { password, ...userWithoutPassword } = req.user as SelectUser;
     res.json(userWithoutPassword);
+  });
+
+  // OTP verification endpoint
+  app.post("/api/verify-otp", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+
+      const { otp } = req.body;
+      
+      if (!otp) {
+        return res.status(400).json({ error: "OTP is required" });
+      }
+      
+      const userId = req.user!.id;
+      const isValid = await storage.verifyOtp(userId, otp);
+      
+      if (isValid) {
+        // Get the updated user data after verification
+        const user = await storage.getUser(userId);
+        
+        if (!user) {
+          return res.status(404).json({ error: "User not found" });
+        }
+        
+        // Update the session with the verified user
+        const { password, ...userWithoutPassword } = user;
+        
+        return res.status(200).json({ 
+          ...userWithoutPassword,
+          verified: true
+        });
+      } else {
+        return res.status(400).json({ error: "Invalid or expired OTP" });
+      }
+    } catch (error) {
+      next(error);
+    }
+  });
+  
+  // Resend OTP endpoint
+  app.post("/api/resend-otp", async (req, res, next) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      
+      const user = req.user!;
+      
+      if (user.isVerified) {
+        return res.status(400).json({ error: "User is already verified" });
+      }
+      
+      const verificationType = user.email ? 'email' : 'phone';
+      const otp = await storage.createOtp(user.id, verificationType);
+      
+      // In a production app, we would send the OTP via email or SMS here
+      console.log(`New OTP for user ${user.id}: ${otp}`);
+      
+      res.status(200).json({
+        message: "OTP sent successfully",
+        tempOtp: otp // Only for demo purposes, remove in production
+      });
+    } catch (error) {
+      next(error);
+    }
   });
 
   // Get order history for the authenticated user
