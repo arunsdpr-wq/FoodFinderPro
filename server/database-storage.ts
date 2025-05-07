@@ -7,7 +7,8 @@ import {
   MenuItem, InsertMenuItem,
   Order, InsertOrder, OrderItem,
   User, InsertUser,
-  cities, locations, restaurants, menuItems, orders, users,
+  Review, InsertReview,
+  cities, locations, restaurants, menuItems, orders, users, reviews,
   otpVerifications, insertOtpVerificationSchema
 } from "@shared/schema";
 import { IStorage } from "./storage";
@@ -269,6 +270,95 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedOrder;
+  }
+
+  // Review methods
+  async getReviews(): Promise<Review[]> {
+    return db.select().from(reviews);
+  }
+  
+  async getReviewsByRestaurant(restaurantId: number): Promise<Review[]> {
+    return db.select()
+      .from(reviews)
+      .where(eq(reviews.restaurantId, restaurantId))
+      .orderBy(desc(reviews.createdAt));
+  }
+  
+  async getReviewsByRestaurantValue(restaurantValue: string): Promise<Review[]> {
+    const restaurant = await this.getRestaurantByValue(restaurantValue);
+    if (!restaurant) return [];
+    
+    return this.getReviewsByRestaurant(restaurant.id);
+  }
+  
+  async getReviewsByUser(userId: number): Promise<Review[]> {
+    return db.select()
+      .from(reviews)
+      .where(eq(reviews.userId, userId))
+      .orderBy(desc(reviews.createdAt));
+  }
+  
+  async getReviewById(id: number): Promise<Review | undefined> {
+    const [review] = await db.select()
+      .from(reviews)
+      .where(eq(reviews.id, id));
+    return review;
+  }
+  
+  async createReview(insertReview: InsertReview): Promise<Review> {
+    const reviewToInsert = {
+      ...insertReview,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isApproved: true, // Default to approved initially
+      orderNumber: insertReview.orderNumber || null,
+      comment: insertReview.comment || null,
+      title: insertReview.title || null
+    };
+    
+    const [review] = await db.insert(reviews)
+      .values(reviewToInsert)
+      .returning();
+    
+    return review;
+  }
+  
+  async updateReview(id: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
+    const [updatedReview] = await db.update(reviews)
+      .set({
+        ...reviewData,
+        updatedAt: new Date()
+      })
+      .where(eq(reviews.id, id))
+      .returning();
+    
+    return updatedReview;
+  }
+  
+  async deleteReview(id: number): Promise<boolean> {
+    const result = await db.delete(reviews)
+      .where(eq(reviews.id, id))
+      .returning({ id: reviews.id });
+    
+    return result.length > 0;
+  }
+  
+  async getAverageRatingByRestaurant(restaurantId: number): Promise<number> {
+    const reviewsForRestaurant = await this.getReviewsByRestaurant(restaurantId);
+    
+    if (reviewsForRestaurant.length === 0) {
+      return 0;
+    }
+    
+    const totalRating = reviewsForRestaurant.reduce((sum, review) => sum + review.rating, 0);
+    return parseFloat((totalRating / reviewsForRestaurant.length).toFixed(1));
+  }
+  
+  async getAverageRatingByRestaurantValue(restaurantValue: string): Promise<number> {
+    const restaurant = await this.getRestaurantByValue(restaurantValue);
+    if (!restaurant) return 0;
+    
+    return this.getAverageRatingByRestaurant(restaurant.id);
   }
 
   async initializeData() {

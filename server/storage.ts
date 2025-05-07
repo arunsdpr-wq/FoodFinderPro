@@ -511,6 +511,126 @@ export class MemStorage implements IStorage {
     this.orders.set(id, updatedOrder);
     return updatedOrder;
   }
+
+  // Review methods
+  async getReviews(): Promise<Review[]> {
+    return Array.from(this.reviews.values());
+  }
+  
+  async getReviewsByRestaurant(restaurantId: number): Promise<Review[]> {
+    return Array.from(this.reviews.values())
+      .filter(review => review.restaurantId === restaurantId)
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.getTime() - a.createdAt.getTime(); // newest first
+      });
+  }
+  
+  async getReviewsByRestaurantValue(restaurantValue: string): Promise<Review[]> {
+    const restaurant = await this.getRestaurantByValue(restaurantValue);
+    if (!restaurant) return [];
+    
+    return this.getReviewsByRestaurant(restaurant.id);
+  }
+  
+  async getReviewsByUser(userId: number): Promise<Review[]> {
+    return Array.from(this.reviews.values())
+      .filter(review => review.userId === userId)
+      .sort((a, b) => {
+        if (!a.createdAt || !b.createdAt) return 0;
+        return b.createdAt.getTime() - a.createdAt.getTime(); // newest first
+      });
+  }
+  
+  async getReviewById(id: number): Promise<Review | undefined> {
+    return this.reviews.get(id);
+  }
+  
+  async createReview(insertReview: InsertReview): Promise<Review> {
+    const id = this.currentReviewId++;
+    
+    const review: Review = {
+      ...insertReview,
+      id,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      isApproved: true
+    };
+    
+    this.reviews.set(id, review);
+    return review;
+  }
+  
+  async updateReview(id: number, reviewData: Partial<InsertReview>): Promise<Review | undefined> {
+    const review = await this.getReviewById(id);
+    if (!review) return undefined;
+    
+    const updatedReview: Review = { 
+      ...review, 
+      ...reviewData,
+      updatedAt: new Date()
+    };
+    
+    this.reviews.set(id, updatedReview);
+    return updatedReview;
+  }
+  
+  async deleteReview(id: number): Promise<boolean> {
+    const exists = this.reviews.has(id);
+    if (!exists) return false;
+    
+    this.reviews.delete(id);
+    return true;
+  }
+  
+  async getAverageRatingByRestaurant(restaurantId: number): Promise<number> {
+    const reviews = await this.getReviewsByRestaurant(restaurantId);
+    if (reviews.length === 0) return 0;
+    
+    const totalRating = reviews.reduce((sum, review) => sum + review.rating, 0);
+    return parseFloat((totalRating / reviews.length).toFixed(1));
+  }
+  
+  async getAverageRatingByRestaurantValue(restaurantValue: string): Promise<number> {
+    const restaurant = await this.getRestaurantByValue(restaurantValue);
+    if (!restaurant) return 0;
+    
+    return this.getAverageRatingByRestaurant(restaurant.id);
+  }
+  
+  // Methods required by interface but not fully implemented in mem storage
+  async getUserByEmail(email: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.email === email);
+  }
+  
+  async getUserByPhone(phoneNumber: string): Promise<User | undefined> {
+    return Array.from(this.users.values()).find(user => user.phoneNumber === phoneNumber);
+  }
+  
+  async markUserAsVerified(userId: number): Promise<User> {
+    const user = await this.getUser(userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    
+    const updatedUser = { ...user, isVerified: true };
+    this.users.set(userId, updatedUser);
+    return updatedUser;
+  }
+  
+  async createOtp(userId: number, type: 'email' | 'phone'): Promise<string> {
+    // For simplicity, just return a fixed OTP code in memory implementation
+    return "123456";
+  }
+  
+  async verifyOtp(userId: number, otp: string): Promise<boolean> {
+    // For simplicity, any OTP is valid in memory implementation
+    return otp === "123456";
+  }
+  
+  async deleteExpiredOtps(): Promise<void> {
+    // No-op for memory implementation
+  }
 }
 
 // Uncomment this line to use memory storage instead of database
