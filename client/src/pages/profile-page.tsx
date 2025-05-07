@@ -79,7 +79,9 @@ export default function ProfilePage() {
               </Avatar>
             </div>
             <CardTitle className="text-xl">{user.fullName || user.username}</CardTitle>
-            <CardDescription>Member since {format(new Date(user.createdAt), "MMMM yyyy")}</CardDescription>
+            <CardDescription>
+              Member since {user.createdAt ? format(new Date(user.createdAt), "MMMM yyyy") : "N/A"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
@@ -150,7 +152,7 @@ export default function ProfilePage() {
                               <p className="font-medium">Order #{order.orderNumber}</p>
                               <div className="flex items-center text-sm text-muted-foreground">
                                 <Clock className="h-3 w-3 mr-1" />
-                                {format(new Date(order.createdAt), "PPp")}
+                                {order.createdAt ? format(new Date(order.createdAt), "PPp") : "N/A"}
                               </div>
                             </div>
                             <Badge className={`${getStatusColor(order.status)} mt-2 md:mt-0`}>
@@ -168,13 +170,13 @@ export default function ProfilePage() {
                                     {item.name} × {item.quantity}
                                   </span>
                                 </div>
-                                <span className="font-medium">${(parseFloat(item.price) * item.quantity).toFixed(2)}</span>
+                                <span className="font-medium">${(Number(item.price) * item.quantity).toFixed(2)}</span>
                               </div>
                             ))}
                             <Separator className="my-2" />
                             <div className="flex justify-between font-medium">
                               <span>Total</span>
-                              <span>${parseFloat(order.totalAmount).toFixed(2)}</span>
+                              <span>${Number(order.totalAmount).toFixed(2)}</span>
                             </div>
                           </div>
                         </CardContent>

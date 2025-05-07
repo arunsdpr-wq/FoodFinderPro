@@ -11,6 +11,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // API Routes - prefix with /api
   
+  // Get orders for the current user
+  app.get("/api/my-orders", (req: Request, res: Response) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Not authenticated" });
+    }
+    
+    try {
+      storage.getOrdersByUserId(req.user.id).then(orders => {
+        res.json(orders);
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch user orders" });
+    }
+  });
+  
   // Get all cities
   app.get("/api/cities", async (req: Request, res: Response) => {
     try {
