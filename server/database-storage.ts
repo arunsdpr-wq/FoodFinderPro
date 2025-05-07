@@ -1,4 +1,4 @@
-import { eq, like } from "drizzle-orm";
+import { eq, like, desc } from "drizzle-orm";
 import { db } from "./db";
 import {
   City, InsertCity,
@@ -25,7 +25,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const [user] = await db.insert(users).values(insertUser).returning();
+    // Ensure null values are properly set for optional fields
+    const userDataToInsert = {
+      ...insertUser,
+      fullName: insertUser.fullName || null,
+      phoneNumber: insertUser.phoneNumber || null,
+      address: insertUser.address || null
+    };
+    
+    const [user] = await db.insert(users).values(userDataToInsert).returning();
     return user;
   }
   
@@ -144,6 +152,10 @@ export class DatabaseStorage implements IStorage {
   // Order methods
   async getOrders(): Promise<Order[]> {
     return db.select().from(orders);
+  }
+  
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt));
   }
   
   async getOrderById(id: number): Promise<Order | undefined> {

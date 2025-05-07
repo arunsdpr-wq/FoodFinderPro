@@ -425,9 +425,7 @@ export class MemStorage implements IStorage {
     const menuItem: MenuItem = { 
       ...insertMenuItem, 
       id,
-      price: typeof insertMenuItem.price === 'string' 
-        ? parseFloat(insertMenuItem.price) 
-        : insertMenuItem.price
+      price: insertMenuItem.price
     };
     this.menuItems.set(id, menuItem);
     return menuItem;
@@ -458,9 +456,7 @@ export class MemStorage implements IStorage {
       orderNumber,
       status: "confirmed",
       createdAt: new Date(),
-      totalAmount: typeof insertOrder.totalAmount === 'string' 
-        ? parseFloat(insertOrder.totalAmount) 
-        : insertOrder.totalAmount
+      totalAmount: insertOrder.totalAmount
     };
     
     this.orders.set(id, order);
