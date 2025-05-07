@@ -8,11 +8,14 @@ import {
   User, InsertUser 
 } from "@shared/schema";
 
+import session from "express-session";
+
 export interface IStorage {
   // User methods
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  getOrdersByUserId(userId: number): Promise<Order[]>;
   
   // City methods
   getCities(): Promise<City[]>;
@@ -425,7 +428,10 @@ export class MemStorage implements IStorage {
     const menuItem: MenuItem = { 
       ...insertMenuItem, 
       id,
-      price: insertMenuItem.price
+      price: insertMenuItem.price,
+      description: insertMenuItem.description || null,
+      imageUrl: insertMenuItem.imageUrl || null,
+      isPopular: insertMenuItem.isPopular || null
     };
     this.menuItems.set(id, menuItem);
     return menuItem;
@@ -446,6 +452,12 @@ export class MemStorage implements IStorage {
     );
   }
   
+  async getOrdersByUserId(userId: number): Promise<Order[]> {
+    return Array.from(this.orders.values())
+      .filter(order => order.userId === userId)
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  }
+  
   async createOrder(insertOrder: InsertOrder): Promise<Order> {
     const id = this.currentOrderId++;
     const orderNumber = `FE${Math.floor(10000 + Math.random() * 90000)}`;
@@ -456,7 +468,9 @@ export class MemStorage implements IStorage {
       orderNumber,
       status: "confirmed",
       createdAt: new Date(),
-      totalAmount: insertOrder.totalAmount
+      totalAmount: insertOrder.totalAmount,
+      deliveryInstructions: insertOrder.deliveryInstructions || null,
+      userId: insertOrder.userId || null
     };
     
     this.orders.set(id, order);
